@@ -1,8 +1,8 @@
-# K\"{a}hler Quantisation for Molecular Surface Approximation (KQMolSA)
+# Kahler Quantisation for Molecular Surface Approximation (KQMolSA)
 
 ## Introduction
 
-Ligand-based virtual screening aims to reduce the cost and duration of drug discovery campaigns. Shape similarity can be used to screen large databases, with the goal of predicting potential new hits by comparing to molecules with known favourable properties. KQMolSA is a new alignment-free surface-based molecular shape descriptor derived from the mathematical theory of K\"{a}hler quantisation. The shape of the molecule is approximated by a 11x11 _Hermitian matrix_.
+Ligand-based virtual screening aims to reduce the cost and duration of drug discovery campaigns. Shape similarity can be used to screen large databases, with the goal of predicting potential new hits by comparing to molecules with known favourable properties. KQMolSA is a new alignment-free surface-based molecular shape descriptor derived from the mathematical theory of Kahler quantisation. The shape of the molecule is approximated by a 11x11 _Hermitian matrix_.
 
 
 ## In Development
