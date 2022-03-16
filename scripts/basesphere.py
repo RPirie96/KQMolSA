@@ -178,11 +178,11 @@ def rescale_inputs(area, centres, radii, lam):
 def get_fingerprint(levels, inputs):
     """
     Fingerprint Matrix that tells you how to navigate through molecule
-    :param levels:
-    :param inputs:
-    :return: fingerprint matrix
-    """
 
+    @param levels:
+    @param inputs:
+    @return: fingerprint matrix
+    """
     # unpack tuples
     no_levels = levels.no_levels
     level_mat = levels.level_mat
@@ -204,12 +204,12 @@ def get_fingerprint(levels, inputs):
 def get_next_level_vec(no_atoms, fingerprint, no_levels):
     """
     Code to produce vector of next level spheres
-    :param no_atoms:
-    :param fingerprint:
-    :param no_levels:
-    :return: named tuple of sphere_levels_vec and next_level
-    """
 
+    @param no_atoms:
+    @param fingerprint:
+    @param no_levels:
+    @return: named tuple of sphere_levels_vec and next_level
+    """
     sphere_levels_vec = []  # Sphere_levels_vec[i] = level of sphere i
     next_level = []  # Next_Level[i] = list of spheres of level above that of sphere i
     for s in range(0, no_atoms):
@@ -239,10 +239,11 @@ def get_next_level_vec(no_atoms, fingerprint, no_levels):
 def get_level_list(no_levels, no_atoms, sphere_levels_vec):
     """
     list of the level-k sphere
-    :param no_levels:
-    :param no_atoms:
-    :param sphere_levels_vec:
-    :return: list of levels within molecule
+
+    @param no_levels:
+    @param no_atoms:
+    @param sphere_levels_vec:
+    @return: list of levels within molecule
     """
     return [
         [j for j in range(0, no_atoms) if sphere_levels_vec[j] == i]
