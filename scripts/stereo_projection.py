@@ -197,8 +197,6 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
     # Finding the maps that take Base_Sphere picture to unit disc for each higher level sphere
 
     base_to_unit_maps = []
-    test_1 = []
-    test_2 = []
 
     for sphere in range(0, no_atoms):
         level = sphere_levels_vec[sphere]
@@ -213,8 +211,6 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
             l_c = l_c + 1
             q = q - 1
         mat = np.matmul(la.inv(integration_maps[sphere]), mat)
-        test_1.append(mat[1][1] / mat[1][0])
-        test_2.append(mat[0][1] / mat[0][0])
         base_to_unit_maps.append(mat)
 
     # when integrating over a standard unit disc need to avoid the discs corresponding to higher level spheres
@@ -224,10 +220,6 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
     a_coeff = []  # A coefficients in rescaled volume form
     b_coeff = []  # B coefficients in rescaled volume form
     c_coeff = []  # C coefficients in rescaled volume form
-
-    a_coeff_2 = []  # A coefficients needed in phi function
-    b_coeff_2 = []  # B coefficients needed in phi function
-    c_coeff_2 = []  # C coefficients needed in phi function
 
     internal_corr = np.zeros(no_atoms)
     external_corr = np.zeros(no_atoms)
@@ -244,13 +236,6 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
         a_coeff.append(a_c)
         b_coeff.append(b_c)
         c_coeff.append(c_c)
-
-        [a_c_2, b_c_2, c_c_2] = new_coeff(a_coeff[sphere], b_coeff[sphere], c_coeff[sphere],
-                                          base_to_unit_maps[sphere][0][0], base_to_unit_maps[sphere][0][1],
-                                          base_to_unit_maps[sphere][1][0], base_to_unit_maps[sphere][1][1])
-        a_coeff_2.append(a_c_2)
-        b_coeff_2.append(b_c_2)
-        c_coeff_2.append(c_c_2)
 
         n_n_l = len(next_level[sphere])  # number of next level spheres
         # will need to skip first level 1 sphere if level=0
@@ -281,10 +266,7 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
         avoid_cent.append(next_l_avoid_cent)
         avoid_rad.append(next_l_avoid_rad)
 
-    sgp = namedtuple('sgp', ['base_to_unit_maps', 'internal_corr', 'external_corr', 'd_in_d_centre', 'd_in_d_radii',
-                             'a_coeff', 'b_coeff', 'c_coeff', 'a_coeff_2', 'b_coeff_2', 'c_coeff_2',
-                             'avoid_cent', 'avoid_rad'])
+    sgp = namedtuple('sgp', ['base_to_unit_maps', 'internal_corr', 'external_corr', 'a_coeff', 'b_coeff', 'c_coeff', 'avoid_cent', 'avoid_rad'])
 
     return sgp(base_to_unit_maps=base_to_unit_maps, internal_corr=internal_corr, external_corr=external_corr,
-               d_in_d_centre=d_in_d_centre, d_in_d_radii=d_in_d_radii, a_coeff=a_coeff, b_coeff=b_coeff, c_coeff=c_coeff,
-               a_coeff_2=a_coeff_2, b_coeff_2=b_coeff_2, c_coeff_2=c_coeff_2, avoid_cent=avoid_cent, avoid_rad=avoid_rad)
+               a_coeff=a_coeff, b_coeff=b_coeff, c_coeff=c_coeff, avoid_cent=avoid_cent, avoid_rad=avoid_rad)
