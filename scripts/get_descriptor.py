@@ -8,7 +8,7 @@ from stereo_projection import get_stereographic_projection
 from k_matrix import get_k_mat
 
 
-def get_descriptor(mol, k_quant):
+def get_descriptor(mol, k_quant=None):
     """
     Function to generate shape descriptor for a single molecule
     @param mol:

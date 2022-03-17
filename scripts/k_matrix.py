@@ -24,9 +24,7 @@ def phi_core(z, d_0, d_1, d_2):
     return p_core
 
 
-def get_k_mat(
-    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None
-):
+def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None):
     """
     Function to compute the Hermitian matrix representation of a molecule
 
