@@ -227,7 +227,7 @@ def get_score(query, test, query_id=None, test_id=None):
         )  # get score between matrices
     else:
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(Diff_fun_2, x0, method="BFGS", args=(query, test[i]))
+        res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         return round(
             (1 / (1 + distance(conj(x0, query), test))), 3
