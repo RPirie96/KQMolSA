@@ -24,7 +24,9 @@ def phi_core(z, d_0, d_1, d_2):
     return p_core
 
 
-def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None):
+def get_k_mat(
+    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None
+):
     """
     Function to compute the Hermitian matrix representation of a molecule
 
@@ -82,9 +84,15 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
             correct = 0
 
             for s_c in range(0, no_atoms):
-                correct += k_mat[sphere][s_c] * np.log(abs(alpha_mat[sphere][s_c] * p + beta_mat[sphere][s_c]) ** 2)
-            phi_1 = phi_core(w, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere]) + correct - (
-                        c_coeff[sphere] / b_coeff[sphere]) * np.log(abs(-m_t[1][0] * w + m_t[0][0]) ** 2)
+                correct += k_mat[sphere][s_c] * np.log(
+                    abs(alpha_mat[sphere][s_c] * p + beta_mat[sphere][s_c]) ** 2
+                )
+            phi_1 = (
+                phi_core(w, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                + correct
+                - (c_coeff[sphere] / b_coeff[sphere])
+                * np.log(abs(-m_t[1][0] * w + m_t[0][0]) ** 2)
+            )
 
             level_s = sphere_levels_vec[sphere]
             pr_s = fingerprint[level_s - 1][sphere]
@@ -92,10 +100,16 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
             w_pr = (m_t_p[0][0] * p + m_t_p[0][1]) / (m_t_p[1][0] * p + m_t_p[1][1])
             correct = 0
             for s_c in range(0, no_atoms):
-                correct += k_mat[pr_s][s_c] * np.log(abs(alpha_mat[pr_s][s_c] * p + beta_mat[pr_s][s_c]) ** 2)
+                correct += k_mat[pr_s][s_c] * np.log(
+                    abs(alpha_mat[pr_s][s_c] * p + beta_mat[pr_s][s_c]) ** 2
+                )
 
-            phi_2 = phi_core(w_pr, c_coeff[pr_s], a_coeff[pr_s], b_coeff[pr_s]) + correct - (
-                        c_coeff[pr_s] / b_coeff[pr_s]) * np.log(abs(-m_t_p[1][0] * w_pr + m_t_p[0][0]) ** 2)
+            phi_2 = (
+                phi_core(w_pr, c_coeff[pr_s], a_coeff[pr_s], b_coeff[pr_s])
+                + correct
+                - (c_coeff[pr_s] / b_coeff[pr_s])
+                * np.log(abs(-m_t_p[1][0] * w_pr + m_t_p[0][0]) ** 2)
+            )
             const[sphere][sphere] = phi_2 - phi_1
 
     area = 0
@@ -117,7 +131,9 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
 
         while k_rad < n_rad:
             rad = k_rad * dr
-            sphe_cont = np.asmatrix(np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex))
+            sphe_cont = np.asmatrix(
+                np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
+            )
             k_theta = 1
             area_t = 0  # theta contribution to area
 
@@ -136,14 +152,24 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
                 w_bar = np.conj(w)
                 correct = 0
                 for s_c in range(0, no_atoms):
-                    correct += (k_mat[sphere][s_c] * np.log(
-                        abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2))
+                    correct += k_mat[sphere][s_c] * np.log(
+                        abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
+                    )
 
-                phi = phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere]) - (
-                            c_coeff[sphere] / b_coeff[sphere]) * np.log(
-                    abs(-m_t[1][0] * z + m_t[0][0]) ** 2) + correct + const[sphere][sphere]
+                phi = (
+                    phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                    - (c_coeff[sphere] / b_coeff[sphere])
+                    * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
+                    + correct
+                    + const[sphere][sphere]
+                )
 
-                vol = (2 * rad * c_coeff[sphere] / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2) * dtheta
+                vol = (
+                    2
+                    * rad
+                    * c_coeff[sphere]
+                    / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
+                ) * dtheta
 
                 herm = np.exp(-k_quant * phi)
 
@@ -174,14 +200,25 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
 
                     correct = 0
                     for s_c in range(0, no_atoms):
-                        correct += (k_mat[sphere][s_c] * np.log(
-                            abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2))
+                        correct += k_mat[sphere][s_c] * np.log(
+                            abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c])
+                            ** 2
+                        )
 
-                    phi = phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere]) - (
-                                c_coeff[sphere] / b_coeff[sphere]) * np.log(
-                        abs(-m_t[1][0] * z + m_t[0][0]) ** 2) + correct + const[sphere][sphere]
+                    phi = (
+                        phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                        - (c_coeff[sphere] / b_coeff[sphere])
+                        * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
+                        + correct
+                        + const[sphere][sphere]
+                    )
 
-                    vol = (2 * rad * c_coeff[sphere] / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2) * dtheta
+                    vol = (
+                        2
+                        * rad
+                        * c_coeff[sphere]
+                        / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
+                    ) * dtheta
 
                     herm = np.exp(-k_quant * phi)
 
@@ -191,7 +228,9 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
                     for mat_i in range(0, 2 * k_quant + 1):
                         w_power_conj = 1
                         for mat_j in range(0, mat_i + 1):
-                            sphe_cont[mat_i, mat_j] += w_power * w_power_conj * herm * vol
+                            sphe_cont[mat_i, mat_j] += (
+                                w_power * w_power_conj * herm * vol
+                            )
                             w_power_conj *= w_bar
                         w_power *= w
                 k_theta += 1
@@ -206,7 +245,9 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
 
         # Radial calcs done here except end point
         # RADIAL TRAPEZIUM RULE Add on last bit
-        sphe_cont = np.asmatrix(np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex))
+        sphe_cont = np.asmatrix(
+            np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
+        )
         k_theta = 1
         area_t = 0
         # theta end point contributions
@@ -222,11 +263,23 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
             w_bar = np.conj(w)
             correct = 0
             for s_c in range(0, no_atoms):
-                correct += (k_mat[sphere][s_c] * np.log(abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2))
+                correct += k_mat[sphere][s_c] * np.log(
+                    abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
+                )
 
-            phi = phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere]) - (
-                        c_coeff[sphere] / b_coeff[sphere]) * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2) + correct + const[sphere][sphere]
-            vol = (2 * radius * c_coeff[sphere] / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2) * dtheta
+            phi = (
+                phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                - (c_coeff[sphere] / b_coeff[sphere])
+                * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
+                + correct
+                + const[sphere][sphere]
+            )
+            vol = (
+                2
+                * radius
+                * c_coeff[sphere]
+                / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
+            ) * dtheta
 
             area_t += vol
 
@@ -255,14 +308,24 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
                 w_bar = np.conj(w)
                 correct = 0
                 for s_c in range(0, no_atoms):
-                    correct += (k_mat[sphere][s_c] * np.log(
-                        abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2))
+                    correct += k_mat[sphere][s_c] * np.log(
+                        abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
+                    )
 
-                phi = phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere]) - (
-                            c_coeff[sphere] / b_coeff[sphere]) * np.log(
-                    abs(-m_t[1][0] * z + m_t[0][0]) ** 2) + correct + const[sphere][sphere]
+                phi = (
+                    phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                    - (c_coeff[sphere] / b_coeff[sphere])
+                    * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
+                    + correct
+                    + const[sphere][sphere]
+                )
 
-                vol = (2 * radius * c_coeff[sphere] / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2) * dtheta
+                vol = (
+                    2
+                    * radius
+                    * c_coeff[sphere]
+                    / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
+                ) * dtheta
 
                 area_t += vol
 
@@ -285,3 +348,5 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
     for mat_i in range(0, 2 * k_quant + 1):
         for mat_j in range(mat_i + 1, 2 * k_quant + 1):
             shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
+
+    return shape_descriptor

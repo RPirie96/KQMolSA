@@ -40,7 +40,9 @@ def beta_coefficient(vector):  # beta coefficient
         return 1j
 
 
-def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_vector, rescaled, fingerprint):
+def get_stereographic_projection(
+    inputs, base_sphere, levels, level_list, next_vector, rescaled, fingerprint
+):
     """
     Function to return the piecewise stereographic projection of the molecule into CP^n
 
@@ -67,26 +69,19 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
     # Attempt to !Automatically! describe surface by 'slices' through each atom outside = C
     # previous levels inside a disc centred at 0
     # next levels inside spheres
-    slice_maps = []  # these map a unit disc in C to the corresponding disc in the piecewise stereographic projection
-    rotation_maps = []  # These map (0,0,1) onto the corresponding vector normal to plane of intersection
-    scale_factors = []  # Scale factor starting at level-(k-1) to get level-k coordinate
-    disc_radii = []  # radii of discs containing previous sphere
 
-    integration_maps = []  # maps used to normalise everything to a unit disc
+    # initialise with empty maps
+
+    # these map a unit disc in C to the corresponding disc in the piecewise stereographic projection
+    slice_maps = [np.zeros((2, 2), dtype=complex)] * no_atoms
+    # These map (0,0,1) onto the corresponding vector normal to plane of intersection
+    rotation_maps = [np.zeros((3, 3), dtype=float)] * no_atoms
+    integration_maps = [np.zeros((2, 2), dtype=complex)] * no_atoms  # maps used to normalise everything to a unit disc
+    scale_factors = [0] * no_atoms  # Scale factor starting at level-(k-1) to get level-k coordinate
+    disc_radii = [0] * no_atoms  # radii of discs containing previous sphere
 
     complex_plane_centres = np.zeros(no_atoms, dtype=complex)
     complex_plane_radii = np.zeros(no_atoms, dtype=float)
-
-    # initialise with empty maps
-    for i in range(0, no_atoms):
-        m_t = np.zeros((2, 2), dtype=complex)
-        i_t = np.zeros((2, 2), dtype=complex)
-        rot_t = np.zeros((3, 3), dtype=float)
-        slice_maps.append(m_t)
-        rotation_maps.append(rot_t)
-        integration_maps.append(i_t)
-        scale_factors.append(0)
-        disc_radii.append(0)
 
     slice_maps[base_sphere][0][0] = 1
     slice_maps[base_sphere][1][1] = 1
@@ -104,10 +99,14 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
             n_s_l = len(next_level[current_sphere])  # number of spheres at next level
             for n_s in range(0, n_s_l):
                 assign_sphere = next_level[current_sphere][n_s]
-                chain_s = get_chain(no_atoms, level_mat, adjacency_matrix, assign_sphere, level + 1)
+                chain_s = get_chain(
+                    no_atoms, level_mat, adjacency_matrix, assign_sphere, level + 1
+                )
 
                 # generate rotation matrix
-                rel_cent = np.zeros((level + 1, 3), float)  # set up vectors of relative centres
+                rel_cent = np.zeros(
+                    (level + 1, 3), float
+                )  # set up vectors of relative centres
                 for q in range(0, level + 1):
                     rel_cent[q] = centres_r[chain_s[q + 1]] - centres_r[chain_s[q]]
                     norm = la.norm(rel_cent[q])
@@ -116,16 +115,31 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
                 for q in range(1, level + 1):
                     p_s = chain_s[q]
                     m_rel = la.inv(rotation_maps[p_s])
-                    rel_cent[level] = (np.dot(m_rel, np.array(
-                        [[rel_cent[level][0]], [rel_cent[level][1]], [rel_cent[level][2]]]))).reshape(1, 3)
+                    rel_cent[level] = (
+                        np.dot(
+                            m_rel,
+                            np.array(
+                                [
+                                    [rel_cent[level][0]],
+                                    [rel_cent[level][1]],
+                                    [rel_cent[level][2]],
+                                ]
+                            ),
+                        )
+                    ).reshape(1, 3)
 
-                rotation_maps[assign_sphere] = get_m_rot([rel_cent[level][0], rel_cent[level][1], rel_cent[level][2]])
+                rotation_maps[assign_sphere] = get_m_rot(
+                    [rel_cent[level][0], rel_cent[level][1], rel_cent[level][2]]
+                )
 
                 # Now do scale factors
-                h_ght = 2 * radii_r[current_sphere] - abs(radii_r[current_sphere] - lam_r[current_sphere][assign_sphere])
+                h_ght = 2 * radii_r[current_sphere] - abs(
+                    radii_r[current_sphere] - lam_r[current_sphere][assign_sphere]
+                )
                 r_l = np.sqrt(h_ght / ((2 * radii_r[current_sphere]) - h_ght))
                 h_ght_next = 2 * radii_r[assign_sphere] - abs(
-                    radii_r[assign_sphere] - lam_r[assign_sphere][current_sphere])
+                    radii_r[assign_sphere] - lam_r[assign_sphere][current_sphere]
+                )
                 r_next = np.sqrt((2 * radii_r[assign_sphere] - h_ght_next) / h_ght_next)
 
                 scale_factors[assign_sphere] = r_next / r_l
@@ -142,9 +156,10 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
                 slice_maps[assign_sphere][1][0] = gamma
                 slice_maps[assign_sphere][1][1] = delta
 
-                [complex_plane_centres[assign_sphere], complex_plane_radii[assign_sphere]] = t_circle(alpha, beta,
-                                                                                                      gamma, delta, 0,
-                                                                                                      r_l)
+                [
+                    complex_plane_centres[assign_sphere],
+                    complex_plane_radii[assign_sphere],
+                ] = t_circle(alpha, beta, gamma, delta, 0, r_l)
 
                 # Integration maps stuff
                 i_resc = np.sqrt(r_next)
@@ -157,10 +172,18 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
     # Contribution of base sphere
     f_l_1 = level_list[1][0]
 
-    integration_maps[base_sphere][0][0] = slice_maps[f_l_1][0][0] / np.sqrt(scale_factors[f_l_1] / disc_radii[f_l_1])
-    integration_maps[base_sphere][0][1] = slice_maps[f_l_1][0][1] * np.sqrt(scale_factors[f_l_1] / disc_radii[f_l_1])
-    integration_maps[base_sphere][1][0] = slice_maps[f_l_1][1][0] / np.sqrt(scale_factors[f_l_1] / disc_radii[f_l_1])
-    integration_maps[base_sphere][1][1] = slice_maps[f_l_1][1][1] * np.sqrt(scale_factors[f_l_1] / disc_radii[f_l_1])
+    integration_maps[base_sphere][0][0] = slice_maps[f_l_1][0][0] / np.sqrt(
+        scale_factors[f_l_1] / disc_radii[f_l_1]
+    )
+    integration_maps[base_sphere][0][1] = slice_maps[f_l_1][0][1] * np.sqrt(
+        scale_factors[f_l_1] / disc_radii[f_l_1]
+    )
+    integration_maps[base_sphere][1][0] = slice_maps[f_l_1][1][0] / np.sqrt(
+        scale_factors[f_l_1] / disc_radii[f_l_1]
+    )
+    integration_maps[base_sphere][1][1] = slice_maps[f_l_1][1][1] * np.sqrt(
+        scale_factors[f_l_1] / disc_radii[f_l_1]
+    )
 
     # Reproducing old plot of discs within discs using the local data
     d_in_d_centre = []
@@ -186,8 +209,15 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
             gamma = slice_maps[sph_c][1][0]
             delta = slice_maps[sph_c][1][1]
             lambda_r = 1 / np.sqrt(scale_factors[sph_c])
-            m_t = (np.array([[lambda_r * alpha, beta / lambda_r], [lambda_r * gamma, delta / lambda_r]]))
-            [cent, rad] = t_circle(m_t[0][0], m_t[0][1], m_t[1][0], m_t[1][1], cent, rad)
+            m_t = np.array(
+                [
+                    [lambda_r * alpha, beta / lambda_r],
+                    [lambda_r * gamma, delta / lambda_r],
+                ]
+            )
+            [cent, rad] = t_circle(
+                m_t[0][0], m_t[0][1], m_t[1][0], m_t[1][1], cent, rad
+            )
 
             q = q - 1
 
@@ -228,11 +258,20 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
         mob_mat = la.inv(integration_maps[sphere])
 
         s_f = np.sqrt(scale_factors[sphere])
-        mob_mat_2 = np.matmul(np.array([[s_f, 0], [0, 1 / s_f]]), la.inv(slice_maps[sphere]))
+        mob_mat_2 = np.matmul(
+            np.array([[s_f, 0], [0, 1 / s_f]]), la.inv(slice_maps[sphere])
+        )
         mob_mat_2 = np.matmul(la.inv(integration_maps[sphere]), mob_mat_2)
 
-        [a_c, b_c, c_c] = new_coeff(0, 1, 2 * (radii_r[sphere] ** 2), mob_mat[1][1], -mob_mat[0][1], -mob_mat[1][0],
-                                    mob_mat[0][0])
+        [a_c, b_c, c_c] = new_coeff(
+            0,
+            1,
+            2 * (radii_r[sphere] ** 2),
+            mob_mat[1][1],
+            -mob_mat[0][1],
+            -mob_mat[1][0],
+            mob_mat[0][0],
+        )
         a_coeff.append(a_c)
         b_coeff.append(b_c)
         c_coeff.append(c_c)
@@ -243,14 +282,22 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
         if sphere_levels_vec[sphere] == 0:
             off_set = 1
         if sphere_levels_vec[sphere] != 0:
-            s_f = np.sqrt(scale_factors[sphere])
             pr_sphere = fingerprint[sphere_levels_vec[sphere] - 1][sphere]
 
             # Previous Coefficients
-            [a_p, b_p, c_p] = new_coeff(0, 1, 2 * (radii_r[pr_sphere] ** 2), mob_mat_2[1][1], -mob_mat_2[0][1],
-                                        -mob_mat_2[1][0], mob_mat_2[0][0])
+            [a_p, b_p, c_p] = new_coeff(
+                0,
+                1,
+                2 * (radii_r[pr_sphere] ** 2),
+                mob_mat_2[1][1],
+                -mob_mat_2[0][1],
+                -mob_mat_2[1][0],
+                mob_mat_2[0][0],
+            )
             internal_corr[sphere] = (c_c / (1 + b_c)) - (c_p / (1 + b_p))
-            external_corr[sphere] = ((c_c / b_c) / (1 + b_c)) - ((c_p / b_p) / (1 + b_p))
+            external_corr[sphere] = ((c_c / b_c) / (1 + b_c)) - (
+                (c_p / b_p) / (1 + b_p)
+            )
 
         # Now find the centres+radius of the next level spheres need to avoid ##
         next_l_avoid_cent = []
@@ -258,15 +305,41 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
 
         for avoid in range(off_set, n_n_l):
             n_sphere = next_level[sphere][avoid]
-            [cent, rad] = t_circle(mob_mat[0][0], mob_mat[0][1], mob_mat[1][0], mob_mat[1][1],
-                                   complex_plane_centres[n_sphere], complex_plane_radii[n_sphere])
+            [cent, rad] = t_circle(
+                mob_mat[0][0],
+                mob_mat[0][1],
+                mob_mat[1][0],
+                mob_mat[1][1],
+                complex_plane_centres[n_sphere],
+                complex_plane_radii[n_sphere],
+            )
             next_l_avoid_cent.append(cent)
             next_l_avoid_rad.append(rad)
 
         avoid_cent.append(next_l_avoid_cent)
         avoid_rad.append(next_l_avoid_rad)
 
-    sgp = namedtuple('sgp', ['base_to_unit_maps', 'internal_corr', 'external_corr', 'a_coeff', 'b_coeff', 'c_coeff', 'avoid_cent', 'avoid_rad'])
+    sgp = namedtuple(
+        "sgp",
+        [
+            "base_to_unit_maps",
+            "internal_corr",
+            "external_corr",
+            "a_coeff",
+            "b_coeff",
+            "c_coeff",
+            "avoid_cent",
+            "avoid_rad",
+        ],
+    )
 
-    return sgp(base_to_unit_maps=base_to_unit_maps, internal_corr=internal_corr, external_corr=external_corr,
-               a_coeff=a_coeff, b_coeff=b_coeff, c_coeff=c_coeff, avoid_cent=avoid_cent, avoid_rad=avoid_rad)
+    return sgp(
+        base_to_unit_maps=base_to_unit_maps,
+        internal_corr=internal_corr,
+        external_corr=external_corr,
+        a_coeff=a_coeff,
+        b_coeff=b_coeff,
+        c_coeff=c_coeff,
+        avoid_cent=avoid_cent,
+        avoid_rad=avoid_rad,
+    )
