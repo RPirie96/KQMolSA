@@ -40,9 +40,7 @@ def beta_coefficient(vector):  # beta coefficient
         return 1j
 
 
-def get_stereographic_projection(
-    inputs, base_sphere, levels, level_list, next_vector, rescaled, fingerprint
-):
+def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_vector, rescaled, fingerprint, centres_r):
     """
     Function to return the piecewise stereographic projection of the molecule into CP^n
 
@@ -53,6 +51,7 @@ def get_stereographic_projection(
     @param next_vector:
     @param rescaled:
     @param fingerprint:
+    @param centres_r:
     @return:
     """
     # unpack tuples
@@ -60,7 +59,6 @@ def get_stereographic_projection(
     adjacency_matrix = inputs.adjacency_matrix
     no_levels = levels.no_levels
     level_mat = levels.level_mat
-    centres_r = rescaled.centres_r
     radii_r = rescaled.radii_r
     lam_r = rescaled.lam_r
     sphere_levels_vec = next_vector.sphere_levels_vec

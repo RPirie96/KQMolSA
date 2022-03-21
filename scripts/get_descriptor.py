@@ -31,6 +31,11 @@ def get_descriptor(mol, k_quant=None):
         inputs.adjacency_matrix, base.centres, inputs.no_atoms, inputs.radii
     )
 
+    # rescale inputs so molecule has surface area equivalent to a unit sphere
+    rescaled = basesphere.rescale_inputs(
+        mol_area.area, base.centres, inputs.radii, mol_area.lam
+    )
+
     # get fingerprint (tells you how to navigate through molecule)
     fingerprint = basesphere.get_fingerprint(levels, inputs)
 
@@ -39,19 +44,17 @@ def get_descriptor(mol, k_quant=None):
         inputs.no_atoms, fingerprint, levels.no_levels
     )
 
+    # error handling to account for cases where there is an atom over the north pole
+    centres_r = basesphere.base_error(base, rescaled, next_vector)
+
     # get level list
     level_list = basesphere.get_level_list(
         levels.no_levels, inputs.no_atoms, next_vector.sphere_levels_vec
     )
 
-    # rescale inputs so molecule has surface area equivalent to a unit sphere
-    rescaled = basesphere.rescale_inputs(
-        mol_area.area, base.centres, inputs.radii, mol_area.lam
-    )
-
     # perform 'piecewise stereographic projection' to move molecule into CP^n
     stereo_proj = get_stereographic_projection(
-        inputs, base.base_sphere, levels, level_list, next_vector, rescaled, fingerprint
+        inputs, base.base_sphere, levels, level_list, next_vector, rescaled, fingerprint, centres_r
     )
 
     # get shape descriptor

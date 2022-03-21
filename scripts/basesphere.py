@@ -16,6 +16,7 @@ Exceptions:
 
 from collections import namedtuple
 import numpy as np
+from numpy import linalg as la
 from scipy.spatial import distance_matrix
 
 from utils import get_chain
@@ -249,3 +250,78 @@ def get_level_list(no_levels, no_atoms, sphere_levels_vec):
         [j for j in range(0, no_atoms) if sphere_levels_vec[j] == i]
         for i in range(0, no_levels + 1)
     ]
+
+
+def base_error(base, rescaled, next_vector):
+
+    """
+    Function to return the vector of next level spheres and the updated rescaled centres post-error handling
+
+    @param base:
+    @param rescaled:
+    @param next_vector:
+    @return: updated centres
+
+    """
+
+    # unpack tuples
+    next_level = next_vector.next_level
+    base_sphere = base.base_sphere
+    centres_r = rescaled.centres_r
+    radii_r = rescaled.radii_r
+    lam_r = rescaled.lam_r
+
+    # Error handling code - take the base sphere and rotate so that north pole is in base sphere
+    fine = 0
+    cover_sphere = base_sphere
+    i = 0
+    while i < len(next_level[base_sphere]) and fine == 0:
+        check_sphere = next_level[base_sphere][i]
+        if (
+            la.norm(
+                centres_r[check_sphere] - radii_r[base_sphere] * np.array([0, 0, 1])
+            )
+            <= radii_r[check_sphere]
+        ):
+            cover_sphere = check_sphere
+            fine = 1  # if there is something over the north pole
+        i += 1
+
+    fine_2 = 0
+    angle_x = 10
+    while angle_x <= np.pi and fine_2 == 0:
+
+        # define matrix to rotate about x and y
+        rot_mat_x = np.array(
+            [
+                [1, 0, 0],
+                [0, np.cos(angle_x), -np.sin(angle_x)],
+                [0, np.sin(angle_x), np.cos(angle_x)],
+            ]
+        )
+        centres_r = np.matmul(centres_r, rot_mat_x)
+
+        unit_cover = (1 / la.norm(centres_r[cover_sphere])) * centres_r[cover_sphere]
+        plane_point = 0.85 * lam_r[base_sphere][cover_sphere] * unit_cover
+        v_rand = np.random.rand(3)
+        v_rand = v_rand / (la.norm(v_rand))
+        w_rand = np.cross(unit_cover, v_rand)
+
+        a_coefficient = la.norm(w_rand) ** 2
+        b_coefficient = 2 * np.dot(plane_point, w_rand)
+        c_coefficient = la.norm(plane_point) ** 2 - radii_r[base_sphere] ** 2
+
+        mu = (
+            -b_coefficient
+            + np.sqrt(b_coefficient ** 2 - 4 * a_coefficient * c_coefficient)
+        ) / (2 * a_coefficient)
+        test_point = plane_point + mu * w_rand
+        fine_2 = 1
+        for i in range(0, len(next_level[base_sphere])):
+            check_sphere = next_level[base_sphere][i]
+            if la.norm(centres_r[check_sphere] - test_point) <= radii_r[check_sphere]:
+                fine_2 = 0
+
+        angle_x = angle_x + 10
+
+    return centres_r
