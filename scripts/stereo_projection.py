@@ -183,45 +183,6 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
         scale_factors[f_l_1] / disc_radii[f_l_1]
     )
 
-    # Reproducing old plot of discs within discs using the local data
-    d_in_d_centre = []
-    d_in_d_radii = []
-
-    for sphere in range(0, no_atoms):
-
-        level = sphere_levels_vec[sphere]
-
-        q = level - 1
-
-        [cent, rad] = [0, disc_radii[sphere] / (scale_factors[sphere])]
-        alpha = slice_maps[sphere][0][0]
-        beta = slice_maps[sphere][0][1]
-        gamma = slice_maps[sphere][1][0]
-        delta = slice_maps[sphere][1][1]
-        [cent, rad] = t_circle(alpha, beta, gamma, delta, cent, rad)
-
-        while q > 0:
-            sph_c = fingerprint[q][sphere]
-            alpha = slice_maps[sph_c][0][0]
-            beta = slice_maps[sph_c][0][1]
-            gamma = slice_maps[sph_c][1][0]
-            delta = slice_maps[sph_c][1][1]
-            lambda_r = 1 / np.sqrt(scale_factors[sph_c])
-            m_t = np.array(
-                [
-                    [lambda_r * alpha, beta / lambda_r],
-                    [lambda_r * gamma, delta / lambda_r],
-                ]
-            )
-            [cent, rad] = t_circle(
-                m_t[0][0], m_t[0][1], m_t[1][0], m_t[1][1], cent, rad
-            )
-
-            q = q - 1
-
-        d_in_d_centre.append(cent)
-        d_in_d_radii.append(rad)
-
     # Finding the maps that take Base_Sphere picture to unit disc for each higher level sphere
 
     base_to_unit_maps = []
