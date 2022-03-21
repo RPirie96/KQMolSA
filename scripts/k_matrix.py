@@ -24,7 +24,9 @@ def phi_core(z, d_0, d_1, d_2):
     return p_core
 
 
-def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None):
+def get_k_mat(
+    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None
+):
     """
     Function to compute the Hermitian matrix representation of a molecule
 
@@ -118,11 +120,17 @@ def get_k_mat(no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_li
         p = (m_t[1][1] * w - m_t[0][1]) / (-m_t[1][0] * w + m_t[0][0])
         correct = 0
         for s_c in range(0, no_atoms):
-            correct += k_mat[sphere][s_c] * np.log(abs(alpha_mat[sphere][s_c] * p + beta_mat[sphere][s_c]) ** 2)
+            correct += k_mat[sphere][s_c] * np.log(
+                abs(alpha_mat[sphere][s_c] * p + beta_mat[sphere][s_c]) ** 2
+            )
 
-        phi_1 = phi_core(w, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere]) + correct - (
-                    c_coeff[sphere] / b_coeff[sphere]) * np.log(abs(-m_t[1][0] * w + m_t[0][0]) ** 2) + const[sphere][
-                    sphere]
+        phi_1 = (
+            phi_core(w, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+            + correct
+            - (c_coeff[sphere] / b_coeff[sphere])
+            * np.log(abs(-m_t[1][0] * w + m_t[0][0]) ** 2)
+            + const[sphere][sphere]
+        )
         if phi_1 < min:
             min = phi_1
 
