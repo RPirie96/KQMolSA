@@ -108,7 +108,7 @@ def get_k_mat(
                 phi_core(w_pr, c_coeff[pr_s], a_coeff[pr_s], b_coeff[pr_s])
                 + correct
                 - (c_coeff[pr_s] / b_coeff[pr_s])
-                * np.log(abs(-m_t_p[1][0] * w_pr + m_t_p[0][0]) ** 2)
+                * np.log(abs(-m_t_p[1][0] * w_pr + m_t_p[0][0]) ** 2) + const[pr_s][pr_s]
             )
             const[sphere][sphere] = phi_2 - phi_1
 
