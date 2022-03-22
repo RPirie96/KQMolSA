@@ -14,6 +14,7 @@ Functions:
 from collections import namedtuple
 import pandas as pd
 from rdkit import Chem
+from rdkit.Chem import Descriptors
 
 
 def macrocycle_filter(mols, ids=None):
@@ -89,7 +90,7 @@ def size_filter(mols, ids=None):
     mols_new, ids_new = [], []
 
     for i, mol in enumerate(mols):
-        if mol.GetNumHeavyAtoms() >= 6 and Chem.Descriptors.ExactMolWt(mol) <= 750.0:
+        if mol.GetNumHeavyAtoms() >= 6 and Descriptors.ExactMolWt(mol) <= 750.0:
             mols_new.append(mol)  # add appropriate sized mols to list
             if ids is not None:
                 ids_new.append(ids[i])  # add molecule id to list
@@ -146,6 +147,29 @@ def drug_like_filter(mols, ids=None):
     return filtered_data(mols_new=mols_new, ids_new=ids_new)
 
 
+def neutralize_atoms(mol):
+    """
+    Function to neutralise charged atoms within a molecule
+    @param mol:
+    @return:
+
+    Source:
+    https://baoilleach.blogspot.com/2019/12/no-charge-simple-approach-to.html
+    """
+    pattern = Chem.MolFromSmarts("[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]")
+    at_matches = mol.GetSubstructMatches(pattern)
+    at_matches_list = [y[0] for y in at_matches]
+    if len(at_matches_list) > 0:
+        for at_idx in at_matches_list:
+            atom = mol.GetAtomWithIdx(at_idx)
+            chg = atom.GetFormalCharge()
+            hcount = atom.GetTotalNumHs()
+            atom.SetFormalCharge(0)
+            atom.SetNumExplicitHs(hcount - chg)
+            atom.UpdatePropertyCache()
+    return mol
+
+
 def ro5_filter(mols, ids=None):
 
     """
@@ -172,10 +196,10 @@ def ro5_filter(mols, ids=None):
         mol_hs = Chem.AddHs(mol)
 
         # Calculate rule of five chemical properties
-        mw = Chem.Descriptors.ExactMolWt(mol_hs)
-        hba = Chem.Descriptors.NumHAcceptors(mol_hs)
-        hbd = Chem.Descriptors.NumHDonors(mol_hs)
-        logp = Chem.Descriptors.MolLogP(mol_hs)
+        mw = Descriptors.ExactMolWt(mol_hs)
+        hba = Descriptors.NumHAcceptors(mol_hs)
+        hbd = Descriptors.NumHDonors(mol_hs)
+        logp = Descriptors.MolLogP(mol_hs)
 
         # Rule of five conditions
         conditions = [mw <= 500, hba <= 10, hbd <= 5, logp <= 5]
@@ -249,7 +273,8 @@ def filter_dataset(mols, ids=None, filename=None, ro5=False, pains=False):
         filter_mac = macrocycle_filter(mols, ids)
         filter_parent = salt_filter(filter_mac.mols_new)
         filter_small = size_filter(filter_parent, filter_mac.ids_new)
-        filter_drug = drug_like_filter(filter_small.mols_new, filter_small.ids_new)
+        neutral_mols = [neutralize_atoms(mol) for mol in filter_small.mols_new]
+        filter_drug = drug_like_filter(neutral_mols, filter_small.ids_new)
         if ro5 and pains:
             filter_ro5 = ro5_filter(filter_drug.mols_new, filter_drug.ids_new)
             filter_pains = pains_filter(filter_ro5.mols_new, filter_ro5.ids_new)
@@ -267,7 +292,8 @@ def filter_dataset(mols, ids=None, filename=None, ro5=False, pains=False):
         filter_mac = macrocycle_filter(mols)
         filter_parent = salt_filter(filter_mac.mols_new)
         filter_small = size_filter(filter_parent)
-        filter_drug = drug_like_filter(filter_small.mols_new)
+        neutral_mols = [neutralize_atoms(mol) for mol in filter_small]
+        filter_drug = drug_like_filter(neutral_mols)
         if ro5 and pains:
             filter_ro5 = ro5_filter(filter_drug.mols_new)
             filter_pains = pains_filter(filter_ro5.mols_new)
