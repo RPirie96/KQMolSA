@@ -190,22 +190,32 @@ def diff_fun_2(x, a_herm, b_herm):
     return distance(conj(x, a_herm), b_herm)
 
 
-def get_score(query, test, query_id=None, test_id=None, k_quant=None):
+def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
     """
     find distances using optimize toolbox, return score between 0 and 1 (by normalising distance)
     @param k_quant:
-    @param query:
-    @param test:
+    @param query_vals:
+    @param test_vals:
     @param query_id: optional
     @param test_id: optional
     @return:
     """
+
+    # unpack named tuples
+    query = query_vals.kq_shape
+    query_area = query_vals.surface_area
+    test = test_vals.kq_shape
+    test_area = test_vals.surface_area
+
     # set default value for k_quant
     if k_quant is None:
         k_quant = 2
 
     # set scale factor
     fac = k_quant ** (-3 / 2)
+
+    # get area contribution
+    area_diff = round((1 / 1 + abs(query_area - test_area)), 3)
 
     # if query id provided, check for self comparison
     if query_id is not None:
@@ -214,13 +224,13 @@ def get_score(query, test, query_id=None, test_id=None, k_quant=None):
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
         res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
         x0 = res.x
-        return round(
-            (1 / (1 + (fac * distance(conj(x0, query), test)))), 3
-        )  # get score between matrices
+        # get score between matrices
+        shape_diff = round((1 / (1 + (fac * distance(conj(x0, query), test)))), 3)
     else:
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
+        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
         x0 = res.x
-        return round(
-            (1 / (1 + (fac * distance(conj(x0, query), test)))), 3
-        )  # get score between matrices
+        # get score between matrices
+        shape_diff = round((1 / (1 + (fac * distance(conj(x0, query), test)))), 3)
+
+    return 0.5 * area_diff + 0.5 * shape_diff

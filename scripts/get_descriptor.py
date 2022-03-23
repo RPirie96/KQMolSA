@@ -1,6 +1,7 @@
 """
 main script to return the descriptor for a single molecule
 """
+from collections import namedtuple
 
 from get_inputs import get_mol_info
 import basesphere
@@ -68,4 +69,6 @@ def get_descriptor(mol, k_quant=None):
         k_quant,
     )
 
-    return kq_shape
+    descriptor = namedtuple("descriptor", ["surface_area", "kq_shape"])
+
+    return descriptor(surface_area=mol_area.area, kq_shape=kq_shape)
