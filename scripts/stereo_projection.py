@@ -71,15 +71,26 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
     # initialise with empty maps
 
     # these map a unit disc in C to the corresponding disc in the piecewise stereographic projection
-    slice_maps = [np.zeros((2, 2), dtype=complex)] * no_atoms
-    # These map (0,0,1) onto the corresponding vector normal to plane of intersection
-    rotation_maps = [np.zeros((3, 3), dtype=float)] * no_atoms
-    integration_maps = [np.zeros((2, 2), dtype=complex)] * no_atoms  # maps used to normalise everything to a unit disc
-    scale_factors = [0] * no_atoms  # Scale factor starting at level-(k-1) to get level-k coordinate
-    disc_radii = [0] * no_atoms  # radii of discs containing previous sphere
+    slice_maps = []  # these map a unit disc in C to the corresponding disc in the piecewise stereographic projection
+    rotation_maps = []  # These map (0,0,1) onto the corresponding vector normal to plane of intersection
+    scale_factors = []  # Scale factor starting at level-(k-1) to get level-k coordinate
+    disc_radii = []  # radii of discs containing previous sphere
+
+    integration_maps = []  # maps used to normalise everything to a unit disc
 
     complex_plane_centres = np.zeros(no_atoms, dtype=complex)
     complex_plane_radii = np.zeros(no_atoms, dtype=float)
+
+    # initialise with empty maps
+    for i in range(0, no_atoms):
+        m_t = np.zeros((2, 2), dtype=complex)
+        i_t = np.zeros((2, 2), dtype=complex)
+        rot_t = np.zeros((3, 3), dtype=float)
+        slice_maps.append(m_t)
+        rotation_maps.append(rot_t)
+        integration_maps.append(i_t)
+        scale_factors.append(0)
+        disc_radii.append(0)
 
     slice_maps[base_sphere][0][0] = 1
     slice_maps[base_sphere][1][1] = 1
@@ -277,7 +288,7 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
 
         avoid_cent.append(next_l_avoid_cent)
         avoid_rad.append(next_l_avoid_rad)
-
+    print(slice_maps)
     sgp = namedtuple(
         "sgp",
         [
