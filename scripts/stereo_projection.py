@@ -288,7 +288,7 @@ def get_stereographic_projection(inputs, base_sphere, levels, level_list, next_v
 
         avoid_cent.append(next_l_avoid_cent)
         avoid_rad.append(next_l_avoid_rad)
-    print(slice_maps)
+
     sgp = namedtuple(
         "sgp",
         [
