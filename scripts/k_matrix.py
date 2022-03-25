@@ -138,13 +138,13 @@ def get_k_mat(
         const[sphere][sphere] -= min
 
     area = 0
-    n_rad = 60  # no radial points
-    n_theta = 30  # no angular points
+    n_rad = 75  # no radial points
+    n_theta = 50  # no angular points
     dtheta = 2 * np.pi / n_theta
 
     # if user hasn't specified k_quant, set value
     if k_quant is None:
-        k_quant = 2
+        k_quant = 1
 
     shape_descriptor = np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
     for sphere in range(0, no_atoms):

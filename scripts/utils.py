@@ -215,7 +215,7 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
     fac = k_quant ** (-3 / 2)
 
     # get area contribution
-    area_diff = round((1 / 1 + abs(query_area - test_area)), 3)
+    area_diff = round(1 / (1 + abs(query_area - test_area)), 3)
 
     # if query id provided, check for self comparison
     if query_id is not None:
@@ -233,4 +233,5 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
         # get score between matrices
         shape_diff = round((1 / (1 + (fac * distance(conj(x0, query), test)))), 3)
 
-    return 0.5 * area_diff + 0.5 * shape_diff
+    return (0.5 * area_diff) + (0.5 * shape_diff)
+
