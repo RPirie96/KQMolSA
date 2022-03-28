@@ -209,29 +209,31 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
 
     # set default value for k_quant
     if k_quant is None:
-        k_quant = 2
+        k_quant = 1
 
     # set scale factor
     fac = k_quant ** (-3 / 2)
 
     # get area contribution
-    area_diff = round(1 / (1 + abs(query_area - test_area)), 3)
+    if query_area >= test_area:
+        area_diff = test_area / query_area
+    else:
+        area_diff = query_area / test_area
 
     # if query id provided, check for self comparison
     if query_id is not None:
         if query_id == test_id:
             return "self"  # marker for self comparison
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
+        res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         # get score between matrices
-        shape_diff = round((1 / (1 + (fac * distance(conj(x0, query), test)))), 3)
+        shape_diff = (1 / (1 + (fac * distance(conj(x0, query), test))))
     else:
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
+        res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         # get score between matrices
-        shape_diff = round((1 / (1 + (fac * distance(conj(x0, query), test)))), 3)
+        shape_diff = (1 / (1 + (fac * distance(conj(x0, query), test))))
 
-    return (0.5 * area_diff) + (0.5 * shape_diff)
-
+    return round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
