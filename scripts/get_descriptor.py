@@ -59,7 +59,7 @@ def get_descriptor(mol, k_quant=None):
     )
 
     # get shape descriptor
-    kq_shape = get_k_mat(
+    kq_shape, area_check = get_k_mat(
         inputs.no_atoms,
         stereo_proj,
         next_vector.sphere_levels_vec,
@@ -69,6 +69,6 @@ def get_descriptor(mol, k_quant=None):
         k_quant,
     )
 
-    descriptor = namedtuple("descriptor", ["surface_area", "kq_shape"])
+    descriptor = namedtuple("descriptor", ["surface_area", "kq_shape", "area_check"])
 
-    return descriptor(surface_area=mol_area.area, kq_shape=kq_shape)
+    return descriptor(surface_area=mol_area.area, kq_shape=kq_shape, area_check=area_check)

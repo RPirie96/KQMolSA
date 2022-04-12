@@ -137,7 +137,7 @@ def get_k_mat(
     for sphere in range(0, no_atoms):
         const[sphere][sphere] -= min
 
-    area = 0
+    area_check = 0
     n_rad = 75  # no radial points
     n_theta = 50  # no angular points
     dtheta = 2 * np.pi / n_theta
@@ -261,7 +261,7 @@ def get_k_mat(
                 k_theta += 1
             # THETA CALCS DONE HERE
 
-            area += area_t * dr
+            area_check += area_t * dr
             for mat_i in range(0, 2 * k_quant + 1):
                 for mat_j in range(0, mat_i + 1):
                     shape_descriptor[mat_i][mat_j] += sphe_cont[mat_i, mat_j] * dr
@@ -365,7 +365,7 @@ def get_k_mat(
             k_theta += 1
         # THETA CALCS DONE HERE
 
-        area += area_t * dr
+        area_check += area_t * dr
         for mat_i in range(0, 2 * k_quant + 1):
             for mat_j in range(0, mat_i + 1):
                 shape_descriptor[mat_i][mat_j] += sphe_cont[mat_i, mat_j] * dr
@@ -374,4 +374,5 @@ def get_k_mat(
         for mat_j in range(mat_i + 1, 2 * k_quant + 1):
             shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
 
-    return shape_descriptor
+
+    return shape_descriptor, area_check

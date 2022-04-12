@@ -223,8 +223,10 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
     # if query id provided, check for self comparison
     if query_id is not None:
         if query_id == test_id:
-            return "self"  # marker for self comparison
+            return "self", "self"  # marker for self comparison
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
+        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
+        x0 = res.x
         res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         # get score between matrices
@@ -232,6 +234,8 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
         shape_diff = (1 / (1 + dist))
     else:
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
+        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
+        x0 = res.x
         res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         # get score between matrices
