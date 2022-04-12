@@ -228,12 +228,16 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
         res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         # get score between matrices
-        shape_diff = (1 / (1 + (fac * distance(conj(x0, query), test))))
+        dist = (fac * distance(conj(x0, query), test))
+        shape_diff = (1 / (1 + dist))
     else:
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
         res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
         x0 = res.x
         # get score between matrices
-        shape_diff = (1 / (1 + (fac * distance(conj(x0, query), test))))
+        dist = (fac * distance(conj(x0, query), test))
+        shape_diff = (1 / (1 + dist))
 
-    return round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+    return dist, sim_score
