@@ -190,7 +190,8 @@ def diff_fun_2(x, a_herm, b_herm):
     return distance(conj(x, a_herm), b_herm)
 
 
-def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
+def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None, test_id=None, x0=None):
+
     """
     find distances using optimize toolbox, return score between 0 and 1 (by normalising distance)
     @param k_quant:
@@ -200,17 +201,6 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
     @param test_id: optional
     @return:
     """
-
-    # unpack named tuples
-    query = query_vals.kq_shape
-    query_area = query_vals.surface_area
-    test = test_vals.kq_shape
-    test_area = test_vals.surface_area
-
-    # set default value for k_quant
-    #TODO change this to reflect list of k_quant
-    if k_quant is None:
-        k_quant = 1
 
     # set scale factor
     fac = k_quant ** (-3 / 2)
@@ -222,28 +212,19 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
         area_diff = query_area / test_area
 
     # if query id provided, check for self comparison
-    if query_id is not None:
-        if query_id == test_id:
-            return "self", "self"  # marker for self comparison
-        #TODO if k_quant = 1,x0 is identity, else use supplied x0
-        x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
-        x0 = res.x
-        res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
-        x0 = res.x
-        # get score between matrices
-        dist = (fac * distance(conj(x0, query), test))
-        shape_diff = (1 / (1 + dist))
+    if query_id is not None and query_id == test_id:
+        return "self", "self", "self"  # marker for self comparison
     else:
-        x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
+        if x0 is None:
+            x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
+        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query_des, test_des))
         x0 = res.x
-        res = minimize(diff_fun_2, x0, method="BFGS", args=(query, test))
+        res = minimize(diff_fun_2, x0, method="BFGS", args=(query_des, test_des))
         x0 = res.x
         # get score between matrices
-        dist = (fac * distance(conj(x0, query), test))
+        dist = (fac * distance(conj(x0, query_des), test_des))
         shape_diff = (1 / (1 + dist))
 
     sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-    return dist, sim_score #TODO return x0
+    return dist, sim_score, x0
