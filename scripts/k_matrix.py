@@ -25,8 +25,7 @@ def phi_core(z, d_0, d_1, d_2):
 
 
 def get_k_mat(
-    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_quant=None
-):
+    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_vals):
     """
     Function to compute the Hermitian matrix representation of a molecule
 
@@ -36,7 +35,7 @@ def get_k_mat(
     @param fingerprint:
     @param no_levels:
     @param level_list:
-    @param k_quant: optional, defined in code as k_quant=2 unless specified
+    @param k_vals:
     """
 
     # unpack tuples
@@ -142,92 +141,42 @@ def get_k_mat(
     n_theta = 50  # no angular points
     dtheta = 2 * np.pi / n_theta
 
-    # if user hasn't specified k_quant, set value
-    if k_quant is None:
-        k_quant = 1
+    # loop over user supplied
+    return_vals = []
+    for k_quant in k_vals:
+        shape_descriptor = np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
+        for sphere in range(0, no_atoms):
+            radius = 1
+            dr = radius / n_rad
+            k_rad = 1  # integrand always vanishes at r=0
+            m_t = base_to_unit_maps[sphere]  # Mobius transform for sphere
+            n_n_l = len(avoid_rad[sphere])  # number of higher-level spheres
 
-    shape_descriptor = np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
-    for sphere in range(0, no_atoms):
-        radius = 1
-        dr = radius / n_rad
-        k_rad = 1  # integrand always vanishes at r=0
-        m_t = base_to_unit_maps[sphere]  # Mobius transform for sphere
-        n_n_l = len(avoid_rad[sphere])  # number of higher-level spheres
-
-        while k_rad < n_rad:
-            rad = k_rad * dr
-            sphe_cont = np.asmatrix(
-                np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
-            )
-            k_theta = 1
-            area_t = 0  # theta contribution to area
-
-            # end point contributions theta=0,2pi
-            z = rad
-
-            # Next bit of code checks to remove contributions from higher level spheres
-            test = 1
-            for avoid in range(0, n_n_l):
-                if abs(z - avoid_cent[sphere][avoid]) <= avoid_rad[sphere][avoid]:
-                    test = 0
-
-            # Now (if necessary) compute quantities
-            if test == 1:
-                w = (m_t[1][1] * z - m_t[0][1]) / (-m_t[1][0] * z + m_t[0][0])
-                w_bar = np.conj(w)
-                correct = 0
-                for s_c in range(0, no_atoms):
-                    correct += k_mat[sphere][s_c] * np.log(
-                        abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
-                    )
-
-                phi = (
-                    phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
-                    - (c_coeff[sphere] / b_coeff[sphere])
-                    * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
-                    + correct
-                    + const[sphere][sphere]
+            while k_rad < n_rad:
+                rad = k_rad * dr
+                sphe_cont = np.asmatrix(
+                    np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
                 )
+                k_theta = 1
+                area_t = 0  # theta contribution to area
 
-                vol = (
-                    2
-                    * rad
-                    * c_coeff[sphere]
-                    / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
-                ) * dtheta
+                # end point contributions theta=0,2pi
+                z = rad
 
-                herm = np.exp(-k_quant * phi)
-
-                area_t += vol
-
-                w_power = 1
-                for mat_i in range(0, 2 * k_quant + 1):
-                    w_power_conj = 1
-                    for mat_j in range(0, mat_i + 1):
-                        sphe_cont[mat_i, mat_j] += w_power * w_power_conj * herm * vol
-                        w_power_conj *= w_bar
-                    w_power *= w
-            # Here computed end point
-
-            # Now rest of circle
-            while k_theta < n_theta:
-                theta = k_theta * dtheta
-                z = rad * (np.cos(theta) + 1j * np.sin(theta))
                 # Next bit of code checks to remove contributions from higher level spheres
                 test = 1
                 for avoid in range(0, n_n_l):
                     if abs(z - avoid_cent[sphere][avoid]) <= avoid_rad[sphere][avoid]:
                         test = 0
+
                 # Now (if necessary) compute quantities
                 if test == 1:
                     w = (m_t[1][1] * z - m_t[0][1]) / (-m_t[1][0] * z + m_t[0][0])
                     w_bar = np.conj(w)
-
                     correct = 0
                     for s_c in range(0, no_atoms):
                         correct += k_mat[sphere][s_c] * np.log(
-                            abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c])
-                            ** 2
+                            abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
                         )
 
                     phi = (
@@ -253,75 +202,79 @@ def get_k_mat(
                     for mat_i in range(0, 2 * k_quant + 1):
                         w_power_conj = 1
                         for mat_j in range(0, mat_i + 1):
-                            sphe_cont[mat_i, mat_j] += (
-                                w_power * w_power_conj * herm * vol
-                            )
+                            sphe_cont[mat_i, mat_j] += w_power * w_power_conj * herm * vol
                             w_power_conj *= w_bar
                         w_power *= w
-                k_theta += 1
-            # THETA CALCS DONE HERE
+                # Here computed end point
 
-            area_check += area_t * dr
-            for mat_i in range(0, 2 * k_quant + 1):
-                for mat_j in range(0, mat_i + 1):
-                    shape_descriptor[mat_i][mat_j] += sphe_cont[mat_i, mat_j] * dr
+                # Now rest of circle
+                while k_theta < n_theta:
+                    theta = k_theta * dtheta
+                    z = rad * (np.cos(theta) + 1j * np.sin(theta))
+                    # Next bit of code checks to remove contributions from higher level spheres
+                    test = 1
+                    for avoid in range(0, n_n_l):
+                        if abs(z - avoid_cent[sphere][avoid]) <= avoid_rad[sphere][avoid]:
+                            test = 0
+                    # Now (if necessary) compute quantities
+                    if test == 1:
+                        w = (m_t[1][1] * z - m_t[0][1]) / (-m_t[1][0] * z + m_t[0][0])
+                        w_bar = np.conj(w)
 
-            k_rad += 1
+                        correct = 0
+                        for s_c in range(0, no_atoms):
+                            correct += k_mat[sphere][s_c] * np.log(
+                                abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c])
+                                ** 2
+                            )
 
-        # Radial calcs done here except end point
-        # RADIAL TRAPEZIUM RULE Add on last bit
-        sphe_cont = np.asmatrix(
-            np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
-        )
-        k_theta = 1
-        area_t = 0
-        # theta end point contributions
-        z = radius
-        # Next bit of code checks to remove contributions from higher level spheres
-        test = 1
-        for avoid in range(0, n_n_l):
-            if abs(z - avoid_cent[sphere][avoid]) <= avoid_rad[sphere][avoid]:
-                test = 0
-        # Now (if necessary) compute quantities
-        if test == 1:
-            w = (m_t[1][1] * z - m_t[0][1]) / (-m_t[1][0] * z + m_t[0][0])
-            w_bar = np.conj(w)
-            correct = 0
-            for s_c in range(0, no_atoms):
-                correct += k_mat[sphere][s_c] * np.log(
-                    abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
-                )
+                        phi = (
+                            phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                            - (c_coeff[sphere] / b_coeff[sphere])
+                            * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
+                            + correct
+                            + const[sphere][sphere]
+                        )
 
-            phi = (
-                phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
-                - (c_coeff[sphere] / b_coeff[sphere])
-                * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
-                + correct
-                + const[sphere][sphere]
+                        vol = (
+                            2
+                            * rad
+                            * c_coeff[sphere]
+                            / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
+                        ) * dtheta
+
+                        herm = np.exp(-k_quant * phi)
+
+                        area_t += vol
+
+                        w_power = 1
+                        for mat_i in range(0, 2 * k_quant + 1):
+                            w_power_conj = 1
+                            for mat_j in range(0, mat_i + 1):
+                                sphe_cont[mat_i, mat_j] += (
+                                    w_power * w_power_conj * herm * vol
+                                )
+                                w_power_conj *= w_bar
+                            w_power *= w
+                    k_theta += 1
+                # THETA CALCS DONE HERE
+
+                area_check += area_t * dr
+                for mat_i in range(0, 2 * k_quant + 1):
+                    for mat_j in range(0, mat_i + 1):
+                        shape_descriptor[mat_i][mat_j] += sphe_cont[mat_i, mat_j] * dr
+
+                k_rad += 1
+
+            # Radial calcs done here except end point
+            # RADIAL TRAPEZIUM RULE Add on last bit
+            sphe_cont = np.asmatrix(
+                np.zeros((2 * k_quant + 1, 2 * k_quant + 1), dtype=complex)
             )
-            vol = (
-                2
-                * radius
-                * c_coeff[sphere]
-                / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
-            ) * dtheta
-
-            area_t += vol
-
-            herm = np.exp(-k_quant * phi)
-            w_power = 1
-            for mat_i in range(0, 2 * k_quant + 1):
-                w_power_conj = 1
-                for mat_j in range(0, mat_i + 1):
-                    sphe_cont[mat_i, mat_j] += w_power * w_power_conj * herm * vol
-                    w_power_conj *= w_bar
-                w_power *= w
-
-        # Here computed end point
-        # Now rest of circle
-        while k_theta < n_theta:
-            theta = k_theta * dtheta
-            z = radius * (np.cos(theta) + 1j * np.sin(theta))
+            k_theta = 1
+            area_t = 0
+            # theta end point contributions
+            z = radius
             # Next bit of code checks to remove contributions from higher level spheres
             test = 1
             for avoid in range(0, n_n_l):
@@ -344,7 +297,6 @@ def get_k_mat(
                     + correct
                     + const[sphere][sphere]
                 )
-
                 vol = (
                     2
                     * radius
@@ -362,17 +314,64 @@ def get_k_mat(
                         sphe_cont[mat_i, mat_j] += w_power * w_power_conj * herm * vol
                         w_power_conj *= w_bar
                     w_power *= w
-            k_theta += 1
-        # THETA CALCS DONE HERE
 
-        area_check += area_t * dr
+            # Here computed end point
+            # Now rest of circle
+            while k_theta < n_theta:
+                theta = k_theta * dtheta
+                z = radius * (np.cos(theta) + 1j * np.sin(theta))
+                # Next bit of code checks to remove contributions from higher level spheres
+                test = 1
+                for avoid in range(0, n_n_l):
+                    if abs(z - avoid_cent[sphere][avoid]) <= avoid_rad[sphere][avoid]:
+                        test = 0
+                # Now (if necessary) compute quantities
+                if test == 1:
+                    w = (m_t[1][1] * z - m_t[0][1]) / (-m_t[1][0] * z + m_t[0][0])
+                    w_bar = np.conj(w)
+                    correct = 0
+                    for s_c in range(0, no_atoms):
+                        correct += k_mat[sphere][s_c] * np.log(
+                            abs((alpha_mat[sphere][s_c] * w) + beta_mat[sphere][s_c]) ** 2
+                        )
+
+                    phi = (
+                        phi_core(z, c_coeff[sphere], a_coeff[sphere], b_coeff[sphere])
+                        - (c_coeff[sphere] / b_coeff[sphere])
+                        * np.log(abs(-m_t[1][0] * z + m_t[0][0]) ** 2)
+                        + correct
+                        + const[sphere][sphere]
+                    )
+
+                    vol = (
+                        2
+                        * radius
+                        * c_coeff[sphere]
+                        / (abs(z - a_coeff[sphere]) ** 2 + b_coeff[sphere]) ** 2
+                    ) * dtheta
+
+                    area_t += vol
+
+                    herm = np.exp(-k_quant * phi)
+                    w_power = 1
+                    for mat_i in range(0, 2 * k_quant + 1):
+                        w_power_conj = 1
+                        for mat_j in range(0, mat_i + 1):
+                            sphe_cont[mat_i, mat_j] += w_power * w_power_conj * herm * vol
+                            w_power_conj *= w_bar
+                        w_power *= w
+                k_theta += 1
+            # THETA CALCS DONE HERE
+
+            area_check += area_t * dr
+            for mat_i in range(0, 2 * k_quant + 1):
+                for mat_j in range(0, mat_i + 1):
+                    shape_descriptor[mat_i][mat_j] += sphe_cont[mat_i, mat_j] * dr
+
         for mat_i in range(0, 2 * k_quant + 1):
-            for mat_j in range(0, mat_i + 1):
-                shape_descriptor[mat_i][mat_j] += sphe_cont[mat_i, mat_j] * dr
+            for mat_j in range(mat_i + 1, 2 * k_quant + 1):
+                shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
 
-    for mat_i in range(0, 2 * k_quant + 1):
-        for mat_j in range(mat_i + 1, 2 * k_quant + 1):
-            shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
+        return_vals.append([k_quant, shape_descriptor, area_check])
 
-
-    return shape_descriptor, area_check
+    return return_vals

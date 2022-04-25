@@ -208,6 +208,7 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
     test_area = test_vals.surface_area
 
     # set default value for k_quant
+    #TODO change this to reflect list of k_quant
     if k_quant is None:
         k_quant = 1
 
@@ -224,6 +225,7 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
     if query_id is not None:
         if query_id == test_id:
             return "self", "self"  # marker for self comparison
+        #TODO if k_quant = 1,x0 is identity, else use supplied x0
         x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
         res = minimize(diff_fun_2, x0, method="COBYLA", args=(query, test))
         x0 = res.x
@@ -244,4 +246,4 @@ def get_score(query_vals, test_vals, query_id=None, test_id=None, k_quant=None):
 
     sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-    return dist, sim_score
+    return dist, sim_score #TODO return x0

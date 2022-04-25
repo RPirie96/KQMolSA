@@ -9,11 +9,11 @@ from stereo_projection import get_stereographic_projection
 from k_matrix import get_k_mat
 
 
-def get_descriptor(mol, k_quant=None):
+def get_descriptor(mol, k_vals):
     """
     Function to generate shape descriptor for a single molecule
     @param mol:
-    @param k_quant:
+    @param k_vals: needs to start from k=1 for accurate distance calcs
     @return:
     """
     # get centres, radii, adjacency matrix and no. atoms
@@ -59,16 +59,16 @@ def get_descriptor(mol, k_quant=None):
     )
 
     # get shape descriptor
-    kq_shape, area_check = get_k_mat(
+    kq_shape = get_k_mat(
         inputs.no_atoms,
         stereo_proj,
         next_vector.sphere_levels_vec,
         fingerprint,
         levels.no_levels,
         level_list,
-        k_quant,
+        k_vals
     )
 
-    descriptor = namedtuple("descriptor", ["surface_area", "kq_shape", "area_check"])
+    descriptor = namedtuple("descriptor", ["surface_area", "kq_shape"])
 
-    return descriptor(surface_area=mol_area.area, kq_shape=kq_shape, area_check=area_check)
+    return descriptor(surface_area=mol_area.area, kq_shape=kq_shape)
