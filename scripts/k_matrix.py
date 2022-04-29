@@ -372,6 +372,6 @@ def get_k_mat(
             for mat_j in range(mat_i + 1, 2 * k_quant + 1):
                 shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
 
-        return_vals.append(shape_descriptor)
+        return_vals.append(np.real(shape_descriptor))
 
     return return_vals
