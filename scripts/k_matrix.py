@@ -136,8 +136,8 @@ def get_k_mat(
     for sphere in range(0, no_atoms):
         const[sphere][sphere] -= min
 
-    n_rad = 75  # no radial points
-    n_theta = 50  # no angular points
+    n_rad = 50  # no radial points, previous 75
+    n_theta = 25  # no angular points, previous 50
     dtheta = 2 * np.pi / n_theta
 
     # loop over user supplied
@@ -370,6 +370,7 @@ def get_k_mat(
 
         for mat_i in range(0, 2 * k_quant + 1):
             for mat_j in range(mat_i + 1, 2 * k_quant + 1):
+                shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
                 shape_descriptor[mat_i][mat_j] = np.conj(shape_descriptor[mat_j][mat_i])
 
         return_vals.append(shape_descriptor)
