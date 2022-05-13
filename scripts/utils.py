@@ -221,6 +221,10 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
         x0 = res.x
         res = minimize(diff_fun_2, x0, method="BFGS", args=(query_des, test_des))
         x0 = res.x
+        res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+        x0 = res.x
+        res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
+        x0 = res.x
         # get score between matrices
         dist = (fac * distance(conj(x0, query_des), test_des))
         shape_diff = (1 / (1 + dist))
