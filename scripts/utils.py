@@ -212,9 +212,8 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
         area_diff = query_area / test_area
 
     # if query id provided, check for self comparison
-    if query_id is not None:
-        if query_id == test_id:
-            return "self", "self", "self"  # marker for self comparison
+    if query_id is not None and test_id is not None and query_id == test_id:
+        return "self", "self", "self"  # marker for self comparison
     else:
         if x0 is None:
             x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
@@ -226,10 +225,11 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
         x0 = res.x
         res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
         x0 = res.x
+
         # get score between matrices
         dist = (fac * distance(conj(x0, query_des), test_des))
         shape_diff = (1 / (1 + dist))
 
-        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
     return round(dist, 3), sim_score, x0
