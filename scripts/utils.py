@@ -231,4 +231,4 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
 
     sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-    return dist, sim_score, x0
+    return round(dist, 3), sim_score, x0
