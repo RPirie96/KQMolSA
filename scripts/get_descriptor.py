@@ -69,6 +69,12 @@ def get_descriptor(mol, k_vals):
         k_vals
     )
 
+    # check no negatives on the diagonal
+    for i in range(len(kq_shape)):
+        diagonal = kq_shape[i].diagonal()
+        if all(i.real > 0 for i in diagonal) == False:
+            raise ValueError("diagonal entries cannot be less than 0")
+
     descriptor = namedtuple("descriptor", ["surface_area", "kq_shape"])
 
     return descriptor(surface_area=mol_area.area, kq_shape=kq_shape)

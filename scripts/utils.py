@@ -190,20 +190,94 @@ def diff_fun_2(x, a_herm, b_herm):
     return distance(conj(x, a_herm), b_herm)
 
 
+def scalefac(x, a_herm):
+    """
+    @param x:
+    @param a_herm:
+    @return:
+    """
+    return np.exp(x) * a_herm
+
+
+def diff_fun_scal(x, a_herm, b_herm):
+    """
+    @param x:
+    @param a_herm:
+    @param b_herm:
+    @return:
+    """
+    return distance(scalefac(x, a_herm), b_herm)
+
+
+def dist_k1(query_des, test_des):
+    x0 = np.array([1, 0, 0, 0, 0, 0, 0])  # identity rotation array
+    k_quant = 1
+
+    # set scale factor
+    fac = k_quant ** (-3 / 2)
+
+    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
+    x0 = res.x
+
+    dist = fac * distance(conj(x0, query_des), test_des)
+
+    return dist, x0
+
+
+def dist_k2(query_des, test_des, x0):
+    k_quant = 2
+
+    # set scale factor
+    fac = k_quant ** (-3 / 2)
+
+    x_scal = x0[6]
+
+    res = minimize(diff_fun_scal, x_scal, method='COBYLA', args=(query_des, test_des))
+    x_scal = res.x
+
+    x0[6] = x_scal
+
+    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
+    x0 = res.x
+
+    res = minimize(diff_fun_2, x0, method='nelder-mead', args=(query_des, test_des))
+    x0 = res.x
+
+    dist = fac * distance(conj(x0, query_des), test_des)
+
+    return dist, x0
+
+
 def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None, test_id=None, x0=None):
 
     """
     find distances using optimize toolbox, return score between 0 and 1 (by normalising distance)
-    @param k_quant:
-    @param query_vals:
-    @param test_vals:
+    @param test_area:
+    @param query_area:
+    @param test_des:
+    @param query_des:
     @param query_id: optional
     @param test_id: optional
     @return:
     """
-
-    # set scale factor
-    fac = k_quant ** (-3 / 2)
 
     # get area contribution
     if query_area >= test_area:
@@ -214,22 +288,22 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
     # if query id provided, check for self comparison
     if query_id is not None and test_id is not None and query_id == test_id:
         return "self", "self", "self"  # marker for self comparison
-    else:
-        if x0 is None:
-            x0 = np.array([1, 0, 0, 0, 0, 0, 1])  # identity rotation array
-        res = minimize(diff_fun_2, x0, method="COBYLA", args=(query_des, test_des))
-        x0 = res.x
-        res = minimize(diff_fun_2, x0, method="BFGS", args=(query_des, test_des))
-        x0 = res.x
-        res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
-        x0 = res.x
-        res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
-        x0 = res.x
 
-        # get score between matrices
-        dist = (fac * distance(conj(x0, query_des), test_des))
+    elif k_quant == 1:
+        dist, x0 = dist_k1(query_des, test_des)
         shape_diff = (1 / (1 + dist))
+        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+        return round(dist, 3), sim_score, x0
 
-    return round(dist, 3), sim_score, x0
+    elif k_quant == 2:
+        dist, x0 = dist_k2(query_des, test_des, x0)
+        shape_diff = (1 / (1 + dist))
+        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+        return round(dist, 3), sim_score, x0
+
+
+
+
+
