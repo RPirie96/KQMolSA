@@ -16,65 +16,73 @@ def get_descriptor(mol, k_vals):
     @param k_vals: needs to start from k=1 for accurate distance calcs
     @return:
     """
-    # get centres, radii, adjacency matrix and no. atoms
-    inputs = get_mol_info(mol)
+    try:
+        # get centres, radii, adjacency matrix and no. atoms
+        inputs = get_mol_info(mol)
 
-    # get base sphere and re-centre on origin
-    base = basesphere.get_base_sphere(inputs.centres)
+        # get base sphere and re-centre on origin
+        base = basesphere.get_base_sphere(inputs.centres)
 
-    # get levels within molecule
-    levels = basesphere.get_levels(
-        inputs.adjacency_matrix, inputs.no_atoms, base.base_sphere
-    )
+        # get levels within molecule
+        levels = basesphere.get_levels(
+            inputs.adjacency_matrix, inputs.no_atoms, base.base_sphere
+        )
 
-    # get molecule area
-    mol_area = basesphere.get_area(
-        inputs.adjacency_matrix, base.centres, inputs.no_atoms, inputs.radii
-    )
+        # get molecule area
+        mol_area = basesphere.get_area(
+            inputs.adjacency_matrix, base.centres, inputs.no_atoms, inputs.radii
+        )
 
-    # rescale inputs so molecule has surface area equivalent to a unit sphere
-    rescaled = basesphere.rescale_inputs(
-        mol_area.area, base.centres, inputs.radii, mol_area.lam
-    )
+        # rescale inputs so molecule has surface area equivalent to a unit sphere
+        rescaled = basesphere.rescale_inputs(
+            mol_area.area, base.centres, inputs.radii, mol_area.lam
+        )
 
-    # get fingerprint (tells you how to navigate through molecule)
-    fingerprint = basesphere.get_fingerprint(levels, inputs)
+        # get fingerprint (tells you how to navigate through molecule)
+        fingerprint = basesphere.get_fingerprint(levels, inputs)
 
-    # get next level vector
-    next_vector = basesphere.get_next_level_vec(
-        inputs.no_atoms, fingerprint, levels.no_levels
-    )
+        # get next level vector
+        next_vector = basesphere.get_next_level_vec(
+            inputs.no_atoms, fingerprint, levels.no_levels
+        )
 
-    # error handling to account for cases where there is an atom over the north pole
-    centres_r = basesphere.base_error(base, rescaled, next_vector)
+        # error handling to account for cases where there is an atom over the north pole
+        centres_r = basesphere.base_error(base, rescaled, next_vector)
 
-    # get level list
-    level_list = basesphere.get_level_list(
-        levels.no_levels, inputs.no_atoms, next_vector.sphere_levels_vec
-    )
+        # get level list
+        level_list = basesphere.get_level_list(
+            levels.no_levels, inputs.no_atoms, next_vector.sphere_levels_vec
+        )
 
-    # perform 'piecewise stereographic projection' to move molecule into CP^n
-    stereo_proj = get_stereographic_projection(
-        inputs, base.base_sphere, levels, level_list, next_vector, rescaled, fingerprint, centres_r
-    )
+        # perform 'piecewise stereographic projection' to move molecule into CP^n
+        stereo_proj = get_stereographic_projection(
+            inputs, base.base_sphere, levels, level_list, next_vector, rescaled, fingerprint, centres_r
+        )
 
-    # get shape descriptor
-    kq_shape = get_k_mat(
-        inputs.no_atoms,
-        stereo_proj,
-        next_vector.sphere_levels_vec,
-        fingerprint,
-        levels.no_levels,
-        level_list,
-        k_vals
-    )
+        # get shape descriptor
+        kq_shape = get_k_mat(
+            inputs.no_atoms,
+            stereo_proj,
+            next_vector.sphere_levels_vec,
+            fingerprint,
+            levels.no_levels,
+            level_list,
+            k_vals
+        )
 
-    # check no negatives on the diagonal
-    for i in range(len(kq_shape)):
-        diagonal = kq_shape[i].diagonal()
-        if all(i.real > 0 for i in diagonal) == False:
-            raise ValueError("diagonal entries cannot be less than 0")
+        # check no negatives on the diagonal
+        for i in range(len(kq_shape)):
+            diagonal = kq_shape[i].diagonal()
+            if all(i.real > 0 for i in diagonal) == False:
+                raise ValueError("diagonal entries cannot be less than 0")
 
-    descriptor = namedtuple("descriptor", ["surface_area", "kq_shape"])
+        descriptor = namedtuple("descriptor", ["surface_area", "kq_shape", "base_sphere"])
 
-    return descriptor(surface_area=mol_area.area, kq_shape=kq_shape)
+        #TODO take out base sphere once case study done
+        return descriptor(surface_area=mol_area.area, kq_shape=kq_shape, base_sphere=base.base_sphere)
+
+    except TypeError:  # RDKit cannot produce 3D coordinates
+        return "TypeError"
+
+    except ArithmeticError:  # Negative Surface Area
+        return "ArithmeticError"
