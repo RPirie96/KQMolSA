@@ -278,7 +278,6 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
     @param test_id: optional
     @return:
     """
-
     # get area contribution
     if query_area >= test_area:
         area_diff = test_area / query_area
@@ -301,7 +300,9 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
         shape_diff = (1 / (1 + dist))
         sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
+        # TODO remove distance and x0 for dud-e benchmarking
         return round(dist, 3), sim_score, x0
+
 
 
 
