@@ -25,7 +25,7 @@ def phi_core(z, d_0, d_1, d_2):
 
 
 def get_k_mat(
-    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_vals):
+    no_atoms, sgp, sphere_levels_vec, fingerprint, no_levels, level_list, k_vals, n_rad, n_theta):
     """
     Function to compute the Hermitian matrix representation of a molecule
 
@@ -136,8 +136,8 @@ def get_k_mat(
     for sphere in range(0, no_atoms):
         const[sphere][sphere] -= min
 
-    n_rad = 50  # no radial points, previous 75
-    n_theta = 25  # no angular points, previous 50
+    # n_rad = 50  # no radial points, previous 75
+    # n_theta = 25  # no angular points, previous 50
     dtheta = 2 * np.pi / n_theta
 
     # loop over user supplied
@@ -375,4 +375,4 @@ def get_k_mat(
 
         return_vals.append(shape_descriptor)
 
-    return return_vals
+    return return_vals, area_check
