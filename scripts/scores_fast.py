@@ -241,12 +241,6 @@ def dist_k1(query_des, test_des):
     res = minimize(diff_fun, x0, method='BFGS', args=(query_des, test_des))
     x0 = res.x
 
-    #res = minimize(diff_fun, x0, method='BFGS', args=(query_des, test_des))
-    #x0 = res.x
-
-    #res = minimize(diff_fun, x0, method='BFGS', args=(query_des, test_des))
-    #x0 = res.x
-
     res = minimize(diff_fun, x0, method='COBYLA', args=(query_des, test_des))
     x0 = res.x
 
@@ -269,12 +263,6 @@ def dist_k2(query_des, test_des, x0):
     res = minimize(diff_fun_2, x0, method='Powell', args=(query_des, test_des))
     x0 = res.x
 
-    #res = minimize(diff_fun_2, x0, method='Nelder-Mead', args=(query_des, test_des))
-    #x0 = res.x
-
-    #res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
-    #x0 = res.x
-
     dist = fac * np.sqrt(kob_dist(query_des, np.exp(scal) * conj_2(x0, test_des)))
 
     return dist, x0
@@ -284,6 +272,8 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
 
     """
     find distances using optimize toolbox, return score between 0 and 1 (by normalising distance)
+    @param x0:
+    @param k_quant:
     @param test_area:
     @param query_area:
     @param test_des:
@@ -304,14 +294,14 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
 
     elif k_quant == 1:
         try:
-	    dist, x0 = dist_k1(query_des, test_des)
-	    shape_diff = (1 / (1 + dist))
-	    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
-	    
-	    return round(dist, 3), sim_score, x0
-	    
-	except np.linalg.LinAlgError:
-	    return "LinAlgError"
+            dist, x0 = dist_k1(query_des, test_des)
+            shape_diff = (1 / (1 + dist))
+            sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+            return round(dist, 3), sim_score, x0
+
+        except np.linalg.LinAlgError:
+            return "LinAlgError"
 
     elif k_quant == 2:
         try:
