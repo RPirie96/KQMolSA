@@ -303,16 +303,23 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
         return "self", "self", "self"  # marker for self comparison
 
     elif k_quant == 1:
-        dist, x0 = dist_k1(query_des, test_des)
-        shape_diff = (1 / (1 + dist))
-        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
-
-        return round(dist, 3), sim_score, x0
+        try:
+	    dist, x0 = dist_k1(query_des, test_des)
+	    shape_diff = (1 / (1 + dist))
+	    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+	    
+	    return round(dist, 3), sim_score, x0
+	    
+	except np.linalg.LinAlgError:
+	    return "LinAlgError"
 
     elif k_quant == 2:
-        dist, x0 = dist_k2(query_des, test_des, x0)
-        shape_diff = (1 / (1 + dist))
-        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+        try:
+            dist, x0 = dist_k2(query_des, test_des, x0)
+            shape_diff = (1 / (1 + dist))
+            sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-        # TODO remove distance and x0 for dud-e benchmarking
-        return round(dist, 3), sim_score, x0
+            # TODO remove distance and x0 for dud-e benchmarking
+            return round(dist, 3), sim_score, x0
+        except np.linalg.LinAlgError:
+            return "LinAlgError"
