@@ -301,7 +301,7 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
             return round(dist, 3), sim_score, x0
 
         except np.linalg.LinAlgError:
-            return "LinAlgError"
+            return "LinAlgError", "LinAlgError", "LinAlgError"
 
     elif k_quant == 2:
         try:
@@ -312,4 +312,4 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
             # TODO remove distance and x0 for dud-e benchmarking
             return round(dist, 3), sim_score, x0
         except np.linalg.LinAlgError:
-            return "LinAlgError"
+            return "LinAlgError", "LinAlgError", "LinAlgError"
