@@ -301,7 +301,32 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
             return round(dist, 3), sim_score, x0
 
         except np.linalg.LinAlgError:
-            return "LinAlgError", "LinAlgError", "LinAlgError"
+            try:
+                test_des_10 = test_des * 10
+                dist, x0 = dist_k1(query_des, test_des_10)
+                shape_diff = (1 / (1 + dist))
+                sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                return round(dist, 3), sim_score, x0
+
+            except np.linalg.LinAlgError:
+                try:
+                    test_des_100 = test_des * 100
+                    dist, x0 = dist_k1(query_des, test_des_100)
+                    shape_diff = (1 / (1 + dist))
+                    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                    return round(dist, 3), sim_score, x0
+                except np.linalg.LinAlgError:
+                    try:
+                        test_des_1000 = test_des * 1000
+                        dist, x0 = dist_k1(query_des, test_des_1000)
+                        shape_diff = (1 / (1 + dist))
+                        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                        return round(dist, 3), sim_score, x0
+                    except np.linalg.LinAlgError:
+                        return "LinAlgError", "LinAlgError", "LinAlgError"
 
     elif k_quant == 2:
         try:
@@ -312,4 +337,29 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
             # TODO remove distance and x0 for dud-e benchmarking
             return round(dist, 3), sim_score, x0
         except np.linalg.LinAlgError:
-            return "LinAlgError", "LinAlgError", "LinAlgError"
+            try:
+                test_des_10 = test_des * 10
+                dist, x0 = dist_k2(query_des, test_des_10, x0)
+                shape_diff = (1 / (1 + dist))
+                sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                return round(dist, 3), sim_score, x0
+
+            except np.linalg.LinAlgError:
+                try:
+                    test_des_100 = test_des * 100
+                    dist, x0 = dist_k2(query_des, test_des_100, x0)
+                    shape_diff = (1 / (1 + dist))
+                    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                    return round(dist, 3), sim_score, x0
+                except np.linalg.LinAlgError:
+                    try:
+                        test_des_1000 = test_des * 1000
+                        dist, x0 = dist_k2(query_des, test_des_1000, x0)
+                        shape_diff = (1 / (1 + dist))
+                        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                        return round(dist, 3), sim_score, x0
+                    except np.linalg.LinAlgError:
+                        return "LinAlgError", "LinAlgError", "LinAlgError"
