@@ -9,11 +9,11 @@ from stereo_projection import get_stereographic_projection
 from k_matrix import get_k_mat
 
 
-def get_descriptor(mol, k_vals, n_rad, n_theta):
+def get_descriptor(mol, k_vals):
     """
     Function to generate shape descriptor for a single molecule
     @param mol:
-    @param k_vals: needs to start from k=1 for accurate distance calcs
+    @param k_vals: as a list, needs to start from k=1 for accurate distance calcs
     @return:
     """
     try:
@@ -67,20 +67,19 @@ def get_descriptor(mol, k_vals, n_rad, n_theta):
             fingerprint,
             levels.no_levels,
             level_list,
-            k_vals, n_rad, n_theta
+            k_vals
         )
 
         # check no negatives on the diagonal
         for i in range(len(kq_shape)):
             diagonal = kq_shape[i].diagonal()
-            if all(i.real > 0 for i in diagonal) == False:
+            if not all(i.real > 0 for i in diagonal):
                 raise ValueError("diagonal entries cannot be less than 0")
 
-        descriptor = namedtuple("descriptor", ["surface_area", "kq_shape", "base_sphere", "integral_area"])
+        descriptor = namedtuple("descriptor", ["surface_area", "kq_shape"])
 
-        #TODO take out base sphere once case study done
-        return descriptor(surface_area=mol_area.area, kq_shape=kq_shape, base_sphere=base.base_sphere,
-                          integral_area=area_check)
+        # output descriptor
+        return descriptor(surface_area=mol_area.area, kq_shape=kq_shape)
 
     except TypeError:  # RDKit cannot produce 3D coordinates
         return "TypeError"
