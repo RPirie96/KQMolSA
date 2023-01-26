@@ -111,157 +111,266 @@ def new_coeff(a, b, c, alpha, beta, gamma, delta):
 
 # functions to get distance between two hermitian matrices
 
-def distance(a_herm, b_herm):  # This
+def kob_dist(a_herm, b_herm):
     """
-    function to compute the symmetric space distance between two Hermitian matrices a_herm and b_herm
+    #Function that computes the distance between A and B
+    must input the inverse of the first entry
     @param a_herm:
     @param b_herm:
     @return:
     """
-    q = np.asmatrix(la.cholesky(b_herm))
-    q_t = q.getH()
-
-    q_inv = la.inv(q)
-    q_inv_t = la.inv(q_t)
-
-    c = np.matmul(np.matmul(q_inv, a_herm), q_inv_t)
-
-    w, v = la.eig(c)
-
+    c_herm = np.matmul(a_herm, b_herm)
+    w = la.eigvals(c_herm)
     d = 0
     for i in range(0, len(w)):
         d += (np.log(w[i])) ** 2
 
-    return np.sqrt(d).real
+    return d.real
 
 
-def induced_sl_n(n, a, b, c, d):
+def scalar_min(a_herm, b_herm):
     """
-    compute the induced N representation of SL_2 [[a,b],[c,d]]
-    @param n:
-    @param a:
-    @param b:
-    @param c:
-    @param d:
+    function computes the optimal scaling for the pair of matrices
+    @param a_herm:
+    @param b_herm:
     @return:
     """
-    m = np.zeros((n, n), dtype=complex)
+    c_herm = np.matmul(la.inv(a_herm), b_herm)
+    w = la.eigvals(c_herm)
+    d = 0
+    for i in range(0, len(w)):
+        d += (np.log(w[i]))
+    l = -(d/len(w))
 
-    for i in range(1, n + 1):
-        for j in range(1, n + 1):
-            coeff = 0
-            for k in range(0, i):
-                if 0 <= i - 1 - k <= j - 1 and k <= n - j:
-                    coeff = coeff + (scipy.special.comb(n - j, k) * scipy.special.comb(j - 1, i - 1 - k) * (b ** k) * (
-                                a ** (n - j - k)) * (c ** (j - i + k)) * (d ** (i - 1 - k)))
-
-            m[i - 1, j - 1] = coeff
-    return m
+    return l.real
 
 
-def conj(x, a_herm):
+def conj_1(x, a_herm):
     """
-    function 'Rotates' the shape descriptor by the element of SL(N,C) induced by SL(2,C)
+    Hard coded conjugation by SL(2,C) for k=1
     @param x:
     @param a_herm:
     @return:
     """
-    n = len(a_herm)
     a = complex(x[0], x[1])
     b = complex(x[2], x[3])
     c = complex(x[4], x[5])
-    d = (1 + (b * c)) / a  # Once we know a,b,c we know d as the matrix [[a,b],[c,d]] has determinant 1
+    d = (1 + (b * c)) / a
 
-    s = np.matrix(induced_sl_n(n, a, b, c, d))
-    s_ast = s.getH()  # conjugate transpose
+    a_b = complex(x[0], -x[1])
+    b_b = complex(x[2], -x[3])
+    c_b = complex(x[4], -x[5])
+    d_b = (1 + (b_b * c_b)) / a_b
 
-    # we also allow for multiplication by our scale factor exp(x[6])
-    return np.exp(x[6]) * np.matmul(np.matmul(s_ast, a_herm), s)
+    s = np.matrix([[a ** 2, a * c, c ** 2], [2 * a * b, (a * d + b * c), 2 * c * d], [b ** 2, b * d, d ** 2]])
+    s_ast = np.matrix([[a_b ** 2, 2 * a_b * b_b, b_b ** 2], [a_b * c_b, (a_b * d_b + b_b * c_b), b_b * d_b],
+                       [c_b ** 2, 2 * c_b * d_b, d_b ** 2]])
+
+    return np.matmul(np.matmul(s_ast, a_herm), s)
 
 
-def diff_fun_2(x, a_herm, b_herm):
+def conj_2(x, a_herm):
     """
-    function that finds the distance between the 'rotation' of A and B
+    Hard coded conjugation by SL(2,C) for k=2
+    @param x:
+    @param a_herm:
+    @return:
+    """
+    a = complex(x[0], x[1])
+    b = complex(x[2], x[3])
+    c = complex(x[4], x[5])
+    d = (1 + (b * c)) / a
+
+    a_b = complex(x[0], -x[1])
+    b_b = complex(x[2], -x[3])
+    c_b = complex(x[4], -x[5])
+    d_b = (1 + (b_b * c_b)) / a_b
+
+    s = np.matrix([
+        [a ** 4, a ** 3 * c, a ** 2 * c ** 2, a * c ** 3, c ** 4],
+        [4 * a ** 3 * b, (a ** 3 * d + 3 * a ** 2 * b * c), (2 * a ** 2 * c * d + 2 * a * b * c ** 2),
+         (3 * a * c ** 2 * d + b * c ** 3), 4 * c ** 3 * d],
+        [6 * a ** 2 * b ** 2, (3 * a ** 2 * b * d + 3 * a * b ** 2 * c),
+         (4 * a * b * c * d + a ** 2 * d ** 2 + b ** 2 * c ** 2), (3 * a * c * d ** 2 + 3 * b * c ** 2 * d),
+         6 * c ** 2 * d ** 2],
+        [4 * a * b ** 3, (b ** 3 * c + 3 * a * b ** 2 * d), (2 * b ** 2 * c * d + 2 * a * b * d ** 2),
+         (3 * b * c * d ** 2 + a * d ** 3), 4 * c * d ** 3],
+        [b ** 4, b ** 3 * d, b ** 2 * d ** 2, b * d ** 3, d ** 4]
+    ])
+
+    s_ast = np.matrix([
+        [a_b ** 4, 4 * a_b ** 3 * b_b, 6 * a_b ** 2 * b_b ** 2, 4 * a_b * b_b ** 3, b_b ** 4],
+        [a_b ** 3 * c_b, (a_b ** 3 * d_b + 3 * a_b ** 2 * b_b * c_b),
+         (3 * a_b ** 2 * b_b * d_b + 3 * a_b * b_b ** 2 * c_b), (b_b ** 3 * c_b + 3 * a_b * b_b ** 2 * d_b),
+         b_b ** 3 * d_b],
+        [a_b ** 2 * c_b ** 2, (2 * a_b ** 2 * c_b * d_b + 2 * a_b * b_b * c_b ** 2),
+         (4 * a_b * b_b * c_b * d_b + a_b ** 2 * d_b ** 2 + b_b ** 2 * c_b ** 2),
+         (2 * b_b ** 2 * c_b * d_b + 2 * a_b * b_b * d_b ** 2), b_b ** 2 * d_b ** 2],
+        [a_b * c_b ** 3, (3 * a_b * c_b ** 2 * d_b + b_b * c_b ** 3),
+         (3 * a_b * c_b * d_b ** 2 + 3 * b_b * c_b ** 2 * d_b), (3 * b_b * c_b * d_b ** 2 + a_b * d_b ** 3),
+         b_b * d_b ** 3],
+        [c_b ** 4, 4 * c_b ** 3 * d_b, 6 * c_b ** 2 * d_b ** 2, 4 * c_b * d_b ** 3, d_b ** 4]
+    ])
+
+    return np.matmul(np.matmul(s_ast, a_herm), s)
+
+
+def diff_fun(x, a_herm, b_herm):
+    """
+    function that finds the distance between the 'rotation' of A and B k=1
     @param x:
     @param a_herm:
     @param b_herm:
     @return:
     """
-    return distance(conj(x, a_herm), b_herm)
+    a = complex(x[0], x[1])
+    b = complex(x[2], x[3])
+    c = complex(x[4], x[5])
+    d = (1 + (b * c)) / a
+
+    a_b = complex(x[0], -x[1])
+    b_b = complex(x[2], -x[3])
+    c_b = complex(x[4], -x[5])
+    d_b = (1 + (b_b * c_b)) / a_b
+
+    s = np.matrix([[a ** 2, a * c, c ** 2], [2 * a * b, (a * d + b * c), 2 * c * d], [b ** 2, b * d, d ** 2]])
+    s_ast = np.matrix([[a_b ** 2, 2 * a_b * b_b, b_b ** 2], [a_b * c_b, (a_b * d_b + b_b * c_b), b_b * d_b],
+                       [c_b ** 2, 2 * c_b * d_b, d_b ** 2]])
+
+    c_herm = np.matmul(a_herm, np.matmul(np.matmul(s_ast, b_herm), s))
+
+    w = la.eigvals(c_herm)
+    dist = 0
+    for i in range(0, len(w)):
+        dist += (np.log(w[i])) ** 2
+
+    return dist.real
 
 
-def scalefac(x, a_herm):
-    """
-    @param x:
-    @param a_herm:
-    @return:
-    """
-    return np.exp(x) * a_herm
+def conj_2(x, a_herm):  # Hard coded conjugation by SL(2,C) for k=2
+    a = complex(x[0], x[1])
+    b = complex(x[2], x[3])
+    c = complex(x[4], x[5])
+    d = (1 + (b * c)) / a
+
+    a_b = complex(x[0], -x[1])
+    b_b = complex(x[2], -x[3])
+    c_b = complex(x[4], -x[5])
+    d_b = (1 + (b_b * c_b)) / a_b
+
+    s = np.matrix([
+        [a ** 4, a ** 3 * c, a ** 2 * c ** 2, a * c ** 3, c ** 4],
+        [4 * a ** 3 * b, (a ** 3 * d + 3 * a ** 2 * b * c), (2 * a ** 2 * c * d + 2 * a * b * c ** 2),
+         (3 * a * c ** 2 * d + b * c ** 3), 4 * c ** 3 * d],
+        [6 * a ** 2 * b ** 2, (3 * a ** 2 * b * d + 3 * a * b ** 2 * c),
+         (4 * a * b * c * d + a ** 2 * d ** 2 + b ** 2 * c ** 2), (3 * a * c * d ** 2 + 3 * b * c ** 2 * d),
+         6 * c ** 2 * d ** 2],
+        [4 * a * b ** 3, (b ** 3 * c + 3 * a * b ** 2 * d), (2 * b ** 2 * c * d + 2 * a * b * d ** 2),
+         (3 * b * c * d ** 2 + a * d ** 3), 4 * c * d ** 3],
+        [b ** 4, b ** 3 * d, b ** 2 * d ** 2, b * d ** 3, d ** 4]
+    ])
+
+    s_ast = np.matrix([
+        [a_b ** 4, 4 * a_b ** 3 * b_b, 6 * a_b ** 2 * b_b ** 2, 4 * a_b * b_b ** 3, b_b ** 4],
+        [a_b ** 3 * c_b, (a_b ** 3 * d_b + 3 * a_b ** 2 * b_b * c_b),
+         (3 * a_b ** 2 * b_b * d_b + 3 * a_b * b_b ** 2 * c_b), (b_b ** 3 * c_b + 3 * a_b * b_b ** 2 * d_b),
+         b_b ** 3 * d_b],
+        [a_b ** 2 * c_b ** 2, (2 * a_b ** 2 * c_b * d_b + 2 * a_b * b_b * c_b ** 2),
+         (4 * a_b * b_b * c_b * d_b + a_b ** 2 * d_b ** 2 + b_b ** 2 * c_b ** 2),
+         (2 * b_b ** 2 * c_b * d_b + 2 * a_b * b_b * d_b ** 2), b_b ** 2 * d_b ** 2],
+        [a_b * c_b ** 3, (3 * a_b * c_b ** 2 * d_b + b_b * c_b ** 3),
+         (3 * a_b * c_b * d_b ** 2 + 3 * b_b * c_b ** 2 * d_b), (3 * b_b * c_b * d_b ** 2 + a_b * d_b ** 3),
+         b_b * d_b ** 3],
+        [c_b ** 4, 4 * c_b ** 3 * d_b, 6 * c_b ** 2 * d_b ** 2, 4 * c_b * d_b ** 3, d_b ** 4]
+    ])
+
+    return np.matmul(np.matmul(s_ast, a_herm), s)
 
 
-def diff_fun_scal(x, a_herm, b_herm):
-    """
-    @param x:
-    @param a_herm:
-    @param b_herm:
-    @return:
-    """
-    return distance(scalefac(x, a_herm), b_herm)
+def diff_fun_2(x, a_herm, b_herm):  # function that finds the distance between the 'rotation' of A and B k=2
+
+    a = complex(x[0], x[1])
+    b = complex(x[2], x[3])
+    c = complex(x[4], x[5])
+    d = (1 + (b * c)) / a
+
+    a_b = complex(x[0], -x[1])
+    b_b = complex(x[2], -x[3])
+    c_b = complex(x[4], -x[5])
+    d_b = (1 + (b_b * c_b)) / a_b
+
+    s = np.matrix([
+        [a ** 4, a ** 3 * c, a ** 2 * c ** 2, a * c ** 3, c ** 4],
+        [4 * a ** 3 * b, (a ** 3 * d + 3 * a ** 2 * b * c), (2 * a ** 2 * c * d + 2 * a * b * c ** 2),
+         (3 * a * c ** 2 * d + b * c ** 3), 4 * c ** 3 * d],
+        [6 * a ** 2 * b ** 2, (3 * a ** 2 * b * d + 3 * a * b ** 2 * c),
+         (4 * a * b * c * d + a ** 2 * d ** 2 + b ** 2 * c ** 2), (3 * a * c * d ** 2 + 3 * b * c ** 2 * d),
+         6 * c ** 2 * d ** 2],
+        [4 * a * b ** 3, (b ** 3 * c + 3 * a * b ** 2 * d), (2 * b ** 2 * c * d + 2 * a * b * d ** 2),
+         (3 * b * c * d ** 2 + a * d ** 3), 4 * c * d ** 3],
+        [b ** 4, b ** 3 * d, b ** 2 * d ** 2, b * d ** 3, d ** 4]
+    ])
+
+    s_ast = np.matrix([
+        [a_b ** 4, 4 * a_b ** 3 * b_b, 6 * a_b ** 2 * b_b ** 2, 4 * a_b * b_b ** 3, b_b ** 4],
+        [a_b ** 3 * c_b, (a_b ** 3 * d_b + 3 * a_b ** 2 * b_b * c_b),
+         (3 * a_b ** 2 * b_b * d_b + 3 * a_b * b_b ** 2 * c_b), (b_b ** 3 * c_b + 3 * a_b * b_b ** 2 * d_b),
+         b_b ** 3 * d_b],
+        [a_b ** 2 * c_b ** 2, (2 * a_b ** 2 * c_b * d_b + 2 * a_b * b_b * c_b ** 2),
+         (4 * a_b * b_b * c_b * d_b + a_b ** 2 * d_b ** 2 + b_b ** 2 * c_b ** 2),
+         (2 * b_b ** 2 * c_b * d_b + 2 * a_b * b_b * d_b ** 2), b_b ** 2 * d_b ** 2],
+        [a_b * c_b ** 3, (3 * a_b * c_b ** 2 * d_b + b_b * c_b ** 3),
+         (3 * a_b * c_b * d_b ** 2 + 3 * b_b * c_b ** 2 * d_b), (3 * b_b * c_b * d_b ** 2 + a_b * d_b ** 3),
+         b_b * d_b ** 3],
+        [c_b ** 4, 4 * c_b ** 3 * d_b, 6 * c_b ** 2 * d_b ** 2, 4 * c_b * d_b ** 3, d_b ** 4]
+    ])
+
+    c_herm = np.matmul(a_herm, np.matmul(np.matmul(s_ast, b_herm), s))
+
+    w = la.eigvals(c_herm)
+    dist = 0
+    for i in range(0, len(w)):
+        dist += (np.log(w[i])) ** 2
+
+    return dist.real
 
 
 def dist_k1(query_des, test_des):
     x0 = np.array([1, 0, 0, 0, 0, 0, 0])  # identity rotation array
     k_quant = 1
+    query_des = la.inv(query_des)  # use inverse of first molecule
 
     # set scale factor
     fac = k_quant ** (-3 / 2)
 
-    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
+    scal = scalar_min(la.inv(query_des), test_des)
+
+    res = minimize(diff_fun, x0, method='BFGS', args=(query_des, test_des))
     x0 = res.x
 
-    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+    res = minimize(diff_fun, x0, method='COBYLA', args=(query_des, test_des))
     x0 = res.x
 
-    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
-    x0 = res.x
-
-    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
-    x0 = res.x
-
-    dist = fac * distance(conj(x0, query_des), test_des)
+    dist = fac * np.sqrt(kob_dist(query_des, np.exp(scal) * conj_1(x0, test_des)))
 
     return dist, x0
 
 
 def dist_k2(query_des, test_des, x0):
     k_quant = 2
+    query_des = la.inv(query_des)  # use inverse of first molecule
 
     # set scale factor
     fac = k_quant ** (-3 / 2)
-
-    x_scal = x0[6]
-
-    res = minimize(diff_fun_scal, x_scal, method='COBYLA', args=(query_des, test_des))
-    x_scal = res.x
-
-    x0[6] = x_scal
-
-    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
-    x0 = res.x
+    scal = scalar_min(la.inv(query_des), test_des)
 
     res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
     x0 = res.x
 
-    res = minimize(diff_fun_2, x0, method='BFGS', args=(query_des, test_des))
+    res = minimize(diff_fun_2, x0, method='Powell', args=(query_des, test_des))
     x0 = res.x
 
-    res = minimize(diff_fun_2, x0, method='COBYLA', args=(query_des, test_des))
-    x0 = res.x
-
-    res = minimize(diff_fun_2, x0, method='nelder-mead', args=(query_des, test_des))
-    x0 = res.x
-
-    dist = fac * distance(conj(x0, query_des), test_des)
+    dist = fac * np.sqrt(kob_dist(query_des, np.exp(scal) * conj_2(x0, test_des)))
 
     return dist, x0
 
@@ -270,6 +379,8 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
 
     """
     find distances using optimize toolbox, return score between 0 and 1 (by normalising distance)
+    @param x0:
+    @param k_quant:
     @param test_area:
     @param query_area:
     @param test_des:
@@ -289,22 +400,72 @@ def get_score(query_des, test_des, query_area, test_area, k_quant, query_id=None
         return "self", "self", "self"  # marker for self comparison
 
     elif k_quant == 1:
-        dist, x0 = dist_k1(query_des, test_des)
-        shape_diff = (1 / (1 + dist))
-        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+        try:
+            dist, x0 = dist_k1(query_des, test_des)
+            shape_diff = (1 / (1 + dist))
+            sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-        return round(dist, 3), sim_score, x0
+            return round(dist, 3), sim_score, x0
+
+        except np.linalg.LinAlgError:
+            try:
+                test_des_10 = test_des * 10
+                dist, x0 = dist_k1(query_des, test_des_10)
+                shape_diff = (1 / (1 + dist))
+                sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                return round(dist, 3), sim_score, x0
+
+            except np.linalg.LinAlgError:
+                try:
+                    test_des_100 = test_des * 100
+                    dist, x0 = dist_k1(query_des, test_des_100)
+                    shape_diff = (1 / (1 + dist))
+                    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                    return round(dist, 3), sim_score, x0
+                except np.linalg.LinAlgError:
+                    try:
+                        test_des_1000 = test_des * 1000
+                        dist, x0 = dist_k1(query_des, test_des_1000)
+                        shape_diff = (1 / (1 + dist))
+                        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+
+                        return round(dist, 3), sim_score, x0
+                    except np.linalg.LinAlgError:
+                        return "LinAlgError", "LinAlgError", "LinAlgError"
 
     elif k_quant == 2:
-        dist, x0 = dist_k2(query_des, test_des, x0)
-        shape_diff = (1 / (1 + dist))
-        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
+        try:
+            dist, x0 = dist_k2(query_des, test_des, x0)
+            shape_diff = (1 / (1 + dist))
+            sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-        # TODO remove distance and x0 for dud-e benchmarking
-        return round(dist, 3), sim_score, x0
+            return round(dist, 3), sim_score, x0
+        except np.linalg.LinAlgError:
+            try:
+                test_des_10 = test_des * 10
+                dist, x0 = dist_k2(query_des, test_des_10, x0)
+                shape_diff = (1 / (1 + dist))
+                sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
+                return round(dist, 3), sim_score, x0
 
+            except np.linalg.LinAlgError:
+                try:
+                    test_des_100 = test_des * 100
+                    dist, x0 = dist_k2(query_des, test_des_100, x0)
+                    shape_diff = (1 / (1 + dist))
+                    sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
+                    return round(dist, 3), sim_score, x0
+                except np.linalg.LinAlgError:
+                    try:
+                        test_des_1000 = test_des * 1000
+                        dist, x0 = dist_k2(query_des, test_des_1000, x0)
+                        shape_diff = (1 / (1 + dist))
+                        sim_score = round(((0.3 * area_diff) + (0.7 * shape_diff)), 3)
 
-
-
+                        return round(dist, 3), sim_score, x0
+                    except np.linalg.LinAlgError:
+                        return "LinAlgError", "LinAlgError", "LinAlgError"

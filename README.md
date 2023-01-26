@@ -1,8 +1,11 @@
-# Kahler Quantisation for Molecular Surface Approximation (KQMolSA)
+# Kähler Quantisation for Molecular Surface Approximation (KQMolSA)
 
 ## Introduction
 
-Ligand-based virtual screening aims to reduce the cost and duration of drug discovery campaigns. Shape similarity can be used to screen large databases, with the goal of predicting potential new hits by comparing to molecules with known favourable properties. KQMolSA is a new alignment-free surface-based molecular shape descriptor derived from the mathematical theory of Kahler quantisation. The shape of the molecule is approximated by a 11x11 _Hermitian matrix_.
+Ligand-based virtual screening aims to reduce the cost and duration of drug discovery campaigns. Shape similarity can be used to screen large databases, with the goal of predicting potential new hits by comparing to 
+molecules with known favourable properties. KQMolSA is a new alignment-free surface-based molecular shape descriptor derived from the theory 
+of Kähler Quantization, a subfield of Riemannian geometry. The shape of the molecule is approximated by a 
+(2k+1)x(2k+1) _Hermitian matrix_. The full method is described [here](https://arxiv.org/pdf/2301.04424.pdf).
 
 
 ## In Development
@@ -24,6 +27,11 @@ git clone https://github.com/RPirie96/KQMolSA.git
 Create a conda environment for the required dependencies (note this was created for MacOS but should work for other OS too)
 ```
 conda env create -f environment.yml
+```
+
+For Windows machines use:
+```
+conda env create -f environment_windows.yml
 ```
 
 ## Running KQMolSA
