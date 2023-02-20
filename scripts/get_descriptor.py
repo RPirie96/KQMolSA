@@ -86,3 +86,6 @@ def get_descriptor(mol, k_vals):
 
     except ArithmeticError:  # Negative Surface Area
         return "ArithmeticError"
+
+    except ValueError:
+        return "ValueError"
