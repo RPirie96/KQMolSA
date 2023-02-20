@@ -89,3 +89,6 @@ def get_descriptor(mol, k_vals):
 
     except ValueError:
         return "ValueError"
+
+    except IndexError:
+        return "IndexError"
